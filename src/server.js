@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const runApp = require("./app.js");
 const logger = require("./utils/logger");
 const pipeline = require("./middleware/pipeline");
+const userRoutes = require("./routes/user.routes");
 
 // Config
 dotenv.config();
@@ -17,7 +18,9 @@ const startApp = () => {
     console.log("Connected to MongoDB Server");
     pipeline.init(logger);
     app.use(pipeline.entryMiddleware);
-    // More middleware here
+    /* routing start */
+    app.use("/user", userRoutes);
+    /* routing end */
     app.use(pipeline.errorMiddleware);
     app.listen(port, () => {
         console.log("App is running on port: " + port);
