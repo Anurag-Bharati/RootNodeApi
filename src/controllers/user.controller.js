@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const getUserByID = (req, res, next) => {
     User.findById(req.params.id)
@@ -12,7 +13,40 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 const login = (req, res, next) => {
-    res.json({ reply: "Login" });
+    User.findOne({ username: req.body.username }, "password")
+    .then((user) => {
+        if (user == null) {
+            let err = new Error(
+                `User with ${req.body.username} name does not exists.`
+            );
+            res.status(404);
+            return next(err);
+        }
+        bcrypt.compare(req.body.password, user.password, (err, status) => {
+            if (err) return next(err);
+            if (!status) {
+                let err = new Error("Password does not match");
+                res.status(401);
+                return next(err);
+            }
+            let data = {
+                userId: user._id,
+                username: user.username,
+            };
+            jwt.sign(
+                data,
+                process.env.SECRET,
+                { expiresIn: "1d" },
+                (err, token) => {
+                    if (err) return next(err);
+                    res.json({
+                        status: "User logged in succesfully",
+                        token: token,
+                    });
+                }
+            );
+        });
+    });
 };
 const register = (req, res, next) => {
     User.findOne({ username: req.body.username })
