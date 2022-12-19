@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const { User } = require("../models/models.wrapper");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -13,8 +13,7 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 const login = (req, res, next) => {
-    User.findOne({ username: req.body.username }, "password")
-    .then((user) => {
+    User.findOne({ username: req.body.username }, "password").then((user) => {
         if (user == null) {
             let err = new Error(
                 `User with ${req.body.username} name does not exists.`

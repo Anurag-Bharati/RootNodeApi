@@ -1,11 +1,13 @@
-const Post = require("../models/post");
+const { Post } = require("../models/models.wrapper");
 
 /* constraints start*/
 const postPerPage = 2;
 /* constraints end*/
 
 const getAllPost = async (req, res, next) => {
-    const page = req.query.page || 1;
+    let page = req.query.page || 1;
+    // check #1
+    page = page > 0 ? page : 1;
     try {
         // execute query with page and limit values
         const posts = await Post.find()
