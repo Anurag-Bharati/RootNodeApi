@@ -1,8 +1,8 @@
 const init = (loggerInstance) => (logger = loggerInstance);
 
 const entryMiddleware = (req, res, next) => {
-    console.log(`[INFO] ${req.method} ${req.path}`);
-    logger.log(`[INFO] ${req.method} ${req.path}`);
+    console.log(`[INBOUND] ${req.method} ${req.path}`);
+    logger.log(`[INBOUND] ${req.method} ${req.path}`);
     next();
 };
 const errorMiddleware = (err, req, res, next) => {

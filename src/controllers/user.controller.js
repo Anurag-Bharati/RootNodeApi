@@ -31,6 +31,7 @@ const login = (req, res, next) => {
             let data = {
                 userId: user._id,
                 username: user.username,
+                role: user.role,
             };
             jwt.sign(
                 data,

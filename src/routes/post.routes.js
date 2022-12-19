@@ -5,7 +5,7 @@ const utils = require("../utils/utils");
 const auth = require("../middleware/auth");
 
 router
-    // .use(auth.verifyUser)
+    .use(auth.verifyUser)
     .route("/")
     .get(controller.getAllPost)
     .post(controller.createPost)

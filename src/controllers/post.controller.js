@@ -1,4 +1,4 @@
-const { Post } = require("../models/models.wrapper");
+const { Post, User } = require("../models/models.wrapper");
 
 /* constraints start*/
 const postPerPage = 2;
@@ -28,7 +28,29 @@ const getAllPost = async (req, res, next) => {
 };
 
 const getPostById = (req, res, next) => {};
-const createPost = (req, res, next) => {};
+const createPost = async (req, res, next) => {
+    const { mediaFiles, caption, visibility } = req.body;
+    if (!caption && !mediaFiles) next(new Error("Invalid Post parameters!"));
+
+    const post = await Post.create({
+        postType: "content",
+        owner: req.user._id,
+        caption: caption,
+        mediaFiles: mediaFiles,
+        visibility: visibility,
+    });
+    // increase user post count
+    const user = await User.findById(req.user._id).select("_id postsCount");
+    user.postsCount++;
+    await user.save();
+
+    // send feedback
+    res.status(201).json({
+        success: true,
+        message: "Post created successfully!",
+        post: post,
+    });
+};
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
 
