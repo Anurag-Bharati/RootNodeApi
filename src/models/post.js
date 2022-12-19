@@ -4,12 +4,12 @@ const postSchema = new Schema(
     {
         postType: {
             type: String,
-            enum: ["content", "event", "markdown"],
+            enum: ["content", "markdown"],
             default: "content",
         },
 
         owner: {
-            type: mongoose.Schema.ObjectId,
+            type: Schema.ObjectId,
             ref: "User",
             required: true,
         },
@@ -57,17 +57,17 @@ const postSchema = new Schema(
             default: "public",
         },
 
-        allowComments: {
+        commentable: {
             type: Boolean,
             default: true,
         },
 
-        allowLikes: {
+        likeable: {
             type: Boolean,
             default: true,
         },
 
-        allowShare: {
+        shareable: {
             type: Boolean,
             default: true,
         },

@@ -4,6 +4,7 @@ const runApp = require("./app.js");
 const logger = require("./utils/logger");
 const pipeline = require("./middleware/pipeline");
 const userRoutes = require("./routes/user.routes");
+const postRoutes = require("./routes/post.routes");
 
 // Config
 dotenv.config();
@@ -20,6 +21,7 @@ const startApp = () => {
     app.use(pipeline.entryMiddleware);
     /* routing start */
     app.use("/user", userRoutes);
+    app.use("/post", postRoutes);
     /* routing end */
     app.use(pipeline.errorMiddleware);
     app.listen(port, () => {
