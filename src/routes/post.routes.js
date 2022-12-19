@@ -5,15 +5,14 @@ const utils = require("../utils/utils");
 const auth = require("../middleware/auth");
 
 router
-    .use(auth.verifyUser)
     .route("/")
     .get(controller.getAllPost)
-    .post(controller.createPost)
+    .post(auth.verifyUser, controller.createPost)
     .put(utils.notImplemented)
     .delete(utils.notImplemented);
 
 router
-    // .use(auth.verifyUser)
+    .use(auth.verifyUser)
     .route("/:id")
     .get(controller.getPostById)
     .post(utils.notImplemented)

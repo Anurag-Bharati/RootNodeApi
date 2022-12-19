@@ -11,6 +11,7 @@ const verifyUser = (req, res, next) => {
     jwt.verify(token, process.env.SECRET, async (err, decoded) => {
         if (err) return next(err);
         // setting req.user val
+        // req.user = decoded;
         req.user = await User.findById(decoded.userId, {
             _id: 1,
             fname: 1,
