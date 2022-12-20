@@ -1,9 +1,10 @@
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/models.wrapper");
+const { PermissionError } = require("../throwable/error.rootnode");
 
 const verifyUser = (req, res, next) => {
     if (!req.headers.authorization) {
-        let err = new Error("Authorization token is missing");
+        const err = new PermissionError("Authorization token is missing", 401);
         res.status(400);
         return next(err);
     }

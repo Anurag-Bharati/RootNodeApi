@@ -8,11 +8,16 @@ const entryMiddleware = (req, res, next) => {
 const errorMiddleware = (err, req, res, next) => {
     console.log(
         "\x1b[31m",
-        `[ERROR] ${err.message} caused at ${req.path}`,
+        `[${err.name}] ${err.statusCode} ${err.message}. Caused by ${req.method} at ${req.path}`,
         "\x1b[0m"
     );
-    logger.log(`[ERR] ${err.message} ${req.path}`);
-    res.status(500).json({ err: err.message });
+    logger.log(
+        `[ERR] ${err.name}:${err.statusCode} ${err.message} ${req.path}`
+    );
+    res.status(err.statusCode).json({
+        status: err.statusCode,
+        err: err.message,
+    });
     next();
 };
 const pipeline = {};
