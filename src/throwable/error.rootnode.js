@@ -1,6 +1,6 @@
 /* error start */
 class ValidationError extends Error {
-    constructor(message, statusCode) {
+    constructor(message, statusCode = 400) {
         super(message);
         this.name = "ValidationError";
         this.message = message;
@@ -8,7 +8,7 @@ class ValidationError extends Error {
     }
 }
 class PermissionError extends Error {
-    constructor(message, statusCode) {
+    constructor(message, statusCode = 401) {
         super(message);
         this.name = "PermissionError";
         this.message = message;
@@ -16,7 +16,7 @@ class PermissionError extends Error {
     }
 }
 class DatabaseError extends Error {
-    constructor(message, statusCode) {
+    constructor(message, statusCode = 500) {
         super(message);
         this.name = "DatabaseError";
         this.message = message;

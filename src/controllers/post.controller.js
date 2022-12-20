@@ -1,4 +1,5 @@
 const { Post, User } = require("../models/models.wrapper");
+const { IllegalArgumentException } = require("../throwable/exception.rootnode");
 
 /* constraints start*/
 const postPerPage = 2;
@@ -30,7 +31,8 @@ const getAllPost = async (req, res, next) => {
 const getPostById = (req, res, next) => {};
 const createPost = async (req, res, next) => {
     const { mediaFiles, caption, visibility } = req.body;
-    if (!caption && !mediaFiles) next(new Error("Invalid Post parameters!"));
+    if (!caption && !mediaFiles)
+        next(new IllegalArgumentException("Invalid Post parameters", 400));
 
     const post = await Post.create({
         postType: "content",

@@ -1,6 +1,11 @@
 const { User } = require("../models/models.wrapper");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const {
+    EntityNotFoundException,
+    EntityConflictException,
+    FieldNotMatchedException,
+} = require("../throwable/exception.rootnode");
 
 const getUserByID = (req, res, next) => {
     User.findById(req.params.id)
@@ -15,7 +20,7 @@ const updateUserByID = (req, res, next) => {
 const login = (req, res, next) => {
     User.findOne({ username: req.body.username }, "password").then((user) => {
         if (user == null) {
-            let err = new Error(
+            const err = new EntityNotFoundException(
                 `User with ${req.body.username} name does not exists.`
             );
             res.status(404);
@@ -24,7 +29,9 @@ const login = (req, res, next) => {
         bcrypt.compare(req.body.password, user.password, (err, status) => {
             if (err) return next(err);
             if (!status) {
-                let err = new Error("Password does not match");
+                const err = new FieldNotMatchedException(
+                    "Password does not match"
+                );
                 res.status(401);
                 return next(err);
             }
@@ -52,7 +59,7 @@ const register = (req, res, next) => {
     User.findOne({ username: req.body.username })
         .then((x) => {
             if (x != null) {
-                let err = new Error(
+                let err = new EntityConflictException(
                     `User with the ${req.body.username} already exists.`
                 );
                 return next(err);
