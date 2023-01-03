@@ -55,6 +55,11 @@ const createPost = async (req, res, next) => {
 };
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
+const uploadFile = (req, res, next) => {
+    if (req.file == undefined) return next(new Error("File is not uploaded."));
+    console.log(req.file.originalname);
+    res.json({ status: "Success" });
+};
 
 module.exports = {
     getAllPost,
@@ -62,4 +67,5 @@ module.exports = {
     createPost,
     updatePostById,
     deletePostById,
+    uploadFile,
 };
