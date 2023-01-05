@@ -14,6 +14,7 @@ const errorMiddleware = (err, req, res, next) => {
     );
     logger.log(`[ERR] ${err.name}:${status} ${err.message} ${req.path}`);
     res.status(status).json({
+        success: false,
         status: status,
         err: err.message,
     });

@@ -2,10 +2,10 @@ const { Schema, model } = require("mongoose");
 
 const postSchema = new Schema(
     {
-        postType: {
+        type: {
             type: String,
-            enum: ["content", "markdown"],
-            default: "content",
+            enum: ["text", "media", "mixed", "markdown"],
+            default: "text",
         },
 
         owner: {
@@ -45,7 +45,7 @@ const postSchema = new Schema(
             default: 0,
         },
 
-        postStatus: {
+        status: {
             type: String,
             enum: ["active", "deleted", "reported", "archived"],
             default: "active",

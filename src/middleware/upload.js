@@ -4,16 +4,15 @@ const path = require("path");
 /* constraints start */
 const maxFileSize = 100 * 1024 * 1024;
 const maxImageSize = 10 * 1024 * 1024;
-const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 const whiteListVideoTypes = [".mp4", ".mkv"];
+const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);
 /* constraints end */
 
 const multerStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "./public/media/uploads/");
-    },
+    destination: (req, file, cb) => cb(null, "./public/media/uploads/"),
     filename: function (req, file, cb) {
-        let ext = path.extname(file.originalname);
+        const ext = path.extname(file.originalname).toLowerCase();
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);
         cb(null, file.fieldname + "-" + uniqueSuffix + ext);
     },
@@ -23,7 +22,6 @@ const fileFilter = (req, file, cb) => {
     const fileType = file.mimetype.split("/")[0];
     const fileSize = parseInt(req.headers["content-length"]);
     const ext = path.extname(file.originalname).toLowerCase();
-    const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);
 
     if (!whiteListMediaTypes.includes(ext))
         return cb({ message: "Unsupported file format" }, false);
