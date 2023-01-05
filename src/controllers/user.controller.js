@@ -1,10 +1,11 @@
-const { User } = require("../models/models.wrapper");
+const { User, Profile, AuthToken } = require("../models/models.wrapper");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {
     EntityNotFoundException,
     EntityConflictException,
     FieldNotMatchedException,
+    IllegalArgumentException,
 } = require("../throwable/exception.rootnode");
 
 const getUserByID = (req, res, next) => {
@@ -17,74 +18,88 @@ const updateUserByID = (req, res, next) => {
         .then((user) => res.status(200).json(user))
         .catch(next);
 };
-const login = (req, res, next) => {
-    User.findOne({ username: req.body.username }, "password").then((user) => {
-        if (user == null) {
-            const err = new EntityNotFoundException(
-                `User with ${req.body.username} name does not exists.`
-            );
-            res.status(404);
-            return next(err);
-        }
-        bcrypt.compare(req.body.password, user.password, (err, status) => {
-            if (err) return next(err);
-            if (!status) {
-                const err = new FieldNotMatchedException(
-                    "Password does not match"
-                );
-                res.status(401);
-                return next(err);
-            }
-            let data = {
-                userId: user._id,
-                username: user.username,
-                role: user.role,
-            };
-            jwt.sign(
-                data,
-                process.env.SECRET,
-                { expiresIn: "1d" },
-                (err, token) => {
-                    if (err) return next(err);
-                    res.json({
-                        status: "User logged in succesfully",
-                        token: token,
-                    });
-                }
-            );
+const login = async (req, res, next) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        const e = new IllegalArgumentException("Missing required fields.");
+        return next(e);
+    }
+    const user = await User.findOne({ username: username });
+
+    if (!user) {
+        return next(
+            new EntityNotFoundException(
+                `User with ${username} name does not exists.`
+            )
+        );
+    }
+
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+        const e = new FieldNotMatchedException("Incorrect password");
+        return next(e);
+    }
+
+    if (user.status !== "active") {
+        return res.status(401).json({
+            success: false,
+            accountStatus: user.status,
+            reply: "Account not active",
         });
+    }
+
+    let authToken = await AuthToken.findOne({ user: user._id });
+
+    if (!authToken) {
+        authToken = await user.generateToken();
+    }
+    if (authToken.expiresAt < new Date().getTime() / 1000) {
+        await authToken.remove();
+        authToken = await user.generateToken();
+    }
+    res.status(200).json({
+        success: true,
+        reply: "User logged in succesfully",
+        accountStatus: user.status,
+        token: authToken.token,
+        expiresAt: authToken.expiresAt,
     });
 };
-const register = (req, res, next) => {
-    User.findOne({ username: req.body.username })
-        .then((x) => {
-            if (x != null) {
-                let err = new EntityConflictException(
-                    `User with the ${req.body.username} already exists.`
-                );
-                return next(err);
-            }
+const register = async (req, res, next) => {
+    const { username, email, password, fname, lname } = req.body;
 
-            bcrypt.hash(req.body.password, 10, (err, hash) => {
-                if (err) return next(err);
-                let user = new User();
-                user.username = req.body.username;
-                user.fname = req.body.fname;
-                user.lname = req.body.lname;
-                user.email = req.body.email;
-                user.password = hash;
-                user.save()
-                    .then((x) => {
-                        res.status(201).json({
-                            status: "User registered successfully!",
-                            username: x.username,
-                            userId: x._id,
-                        });
-                    })
-                    .catch(next);
-            });
-        })
-        .catch(next);
+    if (!username || !email || !password || !fname || !lname) {
+        const e = new IllegalArgumentException("Missing required fields.");
+        return next(e);
+    }
+
+    const user = await User.findOne({ username: username });
+
+    if (user)
+        return next(
+            new EntityConflictException(
+                `User with the ${username} already exists.`
+            )
+        );
+
+    const newUser = await User.create({ username, email, password });
+    newUser.password = await newUser.encryptPassword(password);
+
+    const profile = new Profile();
+    profile.user = newUser._id;
+    profile.fname = fname;
+    profile.lname = lname;
+
+    await newUser.save();
+    await profile.save();
+
+    res.status(201).json({
+        success: true,
+        reply: "User registered successfully!",
+        username: newUser.username,
+        userId: newUser._id,
+    });
 };
 
 module.exports = {
