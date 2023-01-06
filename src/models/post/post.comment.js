@@ -30,7 +30,6 @@ const postCommentSchema = new Schema(
             mediaType: {
                 type: String,
                 enum: ["image", "gif"],
-                default: "image",
             },
         },
 

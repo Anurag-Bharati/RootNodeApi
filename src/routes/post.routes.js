@@ -24,5 +24,18 @@ router
     .use(auth.verifyUser)
     .route("/:pid/likeunlike")
     .post(controller.likeUnlikePost);
+router
+    .use(auth.verifyUser)
+    .route("/:pid/comment")
+    .get(controller.getComments)
+    .post(controller.addComment)
+    .put(utils.notImplemented)
+    .delete(utils.notImplemented);
+
+router
+    .use(auth.verifyUser)
+    .route("/:pid/comment/:cid")
+    .put(utils.notImplemented)
+    .delete(utils.notImplemented);
 
 module.exports = router;

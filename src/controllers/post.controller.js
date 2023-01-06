@@ -1,4 +1,9 @@
-const { Post, User, PostLike } = require("../models/models.wrapper");
+const {
+    Post,
+    User,
+    PostLike,
+    PostComment,
+} = require("../models/models.wrapper");
 const {
     IllegalArgumentException,
     ResourceNotFoundException,
@@ -8,6 +13,7 @@ const {
 
 /* constraints start*/
 const postPerPage = 2;
+const commentsPerPage = 5;
 /* constraints end*/
 
 const getAllPost = async (req, res, next) => {
@@ -17,6 +23,7 @@ const getAllPost = async (req, res, next) => {
     try {
         // execute query with page and limit values
         const posts = await Post.find()
+            .sort("-createdAt")
             .limit(postPerPage)
             .skip((page - 1) * postPerPage)
             .exec();
@@ -108,7 +115,6 @@ const likeUnlikePost = async (req, res, next) => {
     }
     const post = await Post.findById(req.params.pid).select([
         "_id",
-        "owner",
         "likesCount",
     ]);
     if (!post) {
@@ -138,6 +144,63 @@ const likeUnlikePost = async (req, res, next) => {
         });
     }
 };
+
+const addComment = async (req, res, next) => {
+    if (!req.params.pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+    if (!req.body.comment) {
+        return next(new IllegalArgumentException("Missing comment parameter"));
+    }
+    const post = await Post.findById(req.params.pid).select([
+        "_id",
+        "commentsCount",
+    ]);
+
+    if (!post) {
+        return next(new ResourceNotFoundException("Post not found"));
+    }
+    comment = await PostComment.create({
+        post: post._id,
+        user: req.user._id,
+        comment: req.body.comment,
+    });
+    post.commentsCount++;
+    await post.save();
+    res.status(200).json({
+        success: true,
+        reply: "Comment posted!",
+        comment: comment,
+    });
+};
+
+const getComments = async (req, res, next) => {
+    if (!req.params.pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+
+    try {
+        const comments = await PostComment.find()
+            .sort("-createdAt")
+            .limit(commentsPerPage)
+            .skip((page - 1) * commentsPerPage)
+            .exec();
+
+        const count = await PostComment.countDocuments();
+
+        res.json({
+            success: true,
+            comments: comments,
+            totalPages: Math.ceil(count / commentsPerPage),
+            currentPage: Number(page),
+        });
+    } catch (_) {
+        next(_);
+    }
+};
+
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
 const deleteAllPost = async (req, res, next) => {
@@ -153,4 +216,6 @@ module.exports = {
     deletePostById,
     deleteAllPost,
     likeUnlikePost,
+    getComments,
+    addComment,
 };
