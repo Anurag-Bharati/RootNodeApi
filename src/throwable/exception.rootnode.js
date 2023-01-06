@@ -39,6 +39,22 @@ class ResourceNotFoundException extends Error {
         this.statusCode = statusCode;
     }
 }
+class InvalidMediaTypeException extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = "InvalidMediaType";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
+class IllegalPostTypeExecption extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = "IllegalPostType";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
 /* exception end */
 
 const Exceptions = {
@@ -47,6 +63,8 @@ const Exceptions = {
     EntityNotFoundException,
     EntityConflictException,
     FieldNotMatchedException,
+    InvalidMediaTypeException,
+    IllegalPostTypeExecption,
 };
 
 module.exports = Exceptions;

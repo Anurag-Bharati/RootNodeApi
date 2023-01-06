@@ -1,5 +1,10 @@
-const { Post, User } = require("../models/models.wrapper");
-const { IllegalArgumentException } = require("../throwable/exception.rootnode");
+const { Post, User, PostLike } = require("../models/models.wrapper");
+const {
+    IllegalArgumentException,
+    ResourceNotFoundException,
+    InvalidMediaTypeException,
+    IllegalPostTypeExecption,
+} = require("../throwable/exception.rootnode");
 
 /* constraints start*/
 const postPerPage = 2;
@@ -30,17 +35,60 @@ const getAllPost = async (req, res, next) => {
 
 const getPostById = (req, res, next) => {};
 const createPost = async (req, res, next) => {
-    const { mediaFiles, caption, visibility } = req.body;
+    const {
+        caption,
+        visibility,
+        isMarkdown,
+        commentable,
+        likeable,
+        shareable,
+    } = req.body;
+    const mediaFiles = req.files;
+    const medias = [];
+
     if (!caption && !mediaFiles)
-        next(new IllegalArgumentException("Invalid Post parameters", 400));
+        return next(new IllegalArgumentException("Invalid Post parameters"));
+
+    if (isMarkdown == true && mediaFiles && mediaFiles.length > 0) {
+        return next(
+            new IllegalPostTypeExecption("Markdown cannot contain media files")
+        );
+    }
+    if (mediaFiles && mediaFiles.length > 0) {
+        mediaFiles.forEach((media) => {
+            if (!media.path)
+                return next(
+                    new ResourceNotFoundException("Media url not found")
+                );
+            if (!media.mimetype)
+                return next(
+                    new InvalidMediaTypeException("Media type not specified")
+                );
+            medias.push({
+                url: media.path,
+                type: media.mimetype.split("/")[0],
+            });
+        });
+    }
+
+    let type;
+    if (isMarkdown == true) type = "markdown";
+    else if (mediaFiles && mediaFiles.length > 0 && caption) type = "mixed";
+    else if (mediaFiles && mediaFiles.length > 0 && !caption) type = "media";
+    else type = "text";
 
     const post = await Post.create({
-        postType: "content",
+        type: type,
         owner: req.user._id,
         caption: caption,
-        mediaFiles: mediaFiles,
+        mediaFiles: medias,
         visibility: visibility,
+        isMarkdown: isMarkdown,
+        commentable: commentable,
+        likeable: likeable,
+        shareable: shareable,
     });
+
     // increase user post count
     const user = await User.findById(req.user._id).select("_id postsCount");
     user.postsCount++;
@@ -53,8 +101,49 @@ const createPost = async (req, res, next) => {
         post: post,
     });
 };
+
+const likeUnlikePost = async (req, res, next) => {
+    if (!req.params.pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+    const post = await Post.findById(req.params.pid).select([
+        "_id",
+        "owner",
+        "likesCount",
+    ]);
+    if (!post) {
+        return next(new ResourceNotFoundException("Post not found"));
+    }
+    const isLiked = await PostLike.findOne({
+        post: post._id,
+        user: req.user._id,
+    });
+    if (isLiked) {
+        await PostLike.findOneAndDelete({ post: post._id, user: req.user._id });
+        post.likesCount--;
+        await post.save();
+        res.status(200).json({
+            success: true,
+            reply: "Post unliked successfully!",
+            liked: false,
+        });
+    } else {
+        await PostLike.create({ post: post._id, user: req.user._id });
+        post.likesCount++;
+        await post.save();
+        res.status(200).json({
+            success: true,
+            reply: "Post liked successfully!",
+            liked: true,
+        });
+    }
+};
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
+const deleteAllPost = async (req, res, next) => {
+    (await Post.find()).forEach(async (post) => await post.remove());
+    res.json({ success: true, reply: "All post cleared!" });
+};
 
 module.exports = {
     getAllPost,
@@ -62,4 +151,6 @@ module.exports = {
     createPost,
     updatePostById,
     deletePostById,
+    deleteAllPost,
+    likeUnlikePost,
 };

@@ -8,9 +8,9 @@ const upload = require("../middleware/upload");
 router
     .route("/")
     .get(controller.getAllPost)
-    .post(auth.verifyUser, controller.createPost)
+    .post(upload.array("mediaFiles"), auth.verifyUser, controller.createPost)
     .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+    .delete(controller.deleteAllPost);
 
 router
     .use(auth.verifyUser)
@@ -19,5 +19,10 @@ router
     .post(utils.notImplemented)
     .put(controller.updatePostById)
     .delete(controller.deletePostById);
+
+router
+    .use(auth.verifyUser)
+    .route("/:pid/likeunlike")
+    .post(controller.likeUnlikePost);
 
 module.exports = router;

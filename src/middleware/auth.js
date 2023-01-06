@@ -13,7 +13,7 @@ const verifyUser = (req, res, next) => {
         if (err) return next(err);
         // setting req.user val
         // req.user = decoded;
-        req.user = await User.findById(decoded.userId, {
+        req.user = await User.findById(decoded.id, {
             _id: 1,
             fname: 1,
             avatar: 1,

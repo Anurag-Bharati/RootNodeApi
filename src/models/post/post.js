@@ -19,12 +19,17 @@ const postSchema = new Schema(
             maxlength: 512,
         },
 
+        isMarkdown: {
+            type: Boolean,
+            default: false,
+        },
+
         mediaFiles: [
             {
                 url: String,
-                mediaType: {
+                type: {
                     type: String,
-                    enum: ["image", "video", "gif"],
+                    enum: ["image", "video"],
                     default: "image",
                 },
             },
