@@ -91,6 +91,14 @@ userSchema.methods.generateToken = async function () {
         expiresAt: decodedData.exp,
     });
 
+    console.log(
+        "\x1b[36m",
+        "[TokenGenerated] New token has been assigned to " +
+            "\x1b[90m" +
+            this._id +
+            "\x1b[0m"
+    );
+
     return authToken;
 };
 

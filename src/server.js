@@ -18,6 +18,7 @@ const startApp = () => {
     console.log("Connected to MongoDB Server");
     pipeline.init(logger);
     app.use(pipeline.entryMiddleware);
+    app.use(pipeline.exitMiddleware);
     /* routing start */
     app.use("/user", routes.user);
     app.use("/post", routes.post);
