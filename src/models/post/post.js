@@ -1,5 +1,9 @@
 const { Schema, model } = require("mongoose");
 
+const mediaLimit = (val) => {
+    return val.length <= 10;
+};
+
 const postSchema = new Schema(
     {
         type: {
@@ -24,16 +28,19 @@ const postSchema = new Schema(
             default: false,
         },
 
-        mediaFiles: [
-            {
-                url: String,
-                type: {
-                    type: String,
-                    enum: ["image", "video"],
-                    default: "image",
+        mediaFiles: {
+            type: [
+                {
+                    url: String,
+                    type: {
+                        type: String,
+                        enum: ["image", "video"],
+                        default: "image",
+                    },
                 },
-            },
-        ],
+            ],
+            validate: [mediaLimit, "{PATH} exceeds the limit of 10"],
+        },
 
         likesCount: {
             type: Number,

@@ -1,6 +1,4 @@
 const { User, Profile, AuthToken } = require("../models/models.wrapper");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const {
     EntityNotFoundException,
     EntityConflictException,
@@ -19,6 +17,7 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 const login = async (req, res, next) => {
+    let now = Math.ceil(new Date().getTime() * 0.001); // in seconds
     const { username, password } = req.body;
     if (!username || !password) {
         const e = new IllegalArgumentException("Missing required fields.");
@@ -54,7 +53,8 @@ const login = async (req, res, next) => {
     if (!authToken) {
         authToken = await user.generateToken();
     }
-    if (authToken.expiresAt < new Date().getTime() / 1000) {
+
+    if (now > authToken.expiresAt) {
         await authToken.remove();
         authToken = await user.generateToken();
     }

@@ -55,6 +55,30 @@ class IllegalPostTypeExecption extends Error {
         this.statusCode = statusCode;
     }
 }
+class FileExceedsSizeLimitExecption extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = "FileExceedsSizeLimit";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
+class FilesExceedsFilesLimitExecption extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = "FilesExceedsFilesLimit";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
+class UnsupportedFileFormatException extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = "UnsupportedFileFormat";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
 /* exception end */
 
 const Exceptions = {
@@ -65,6 +89,9 @@ const Exceptions = {
     FieldNotMatchedException,
     InvalidMediaTypeException,
     IllegalPostTypeExecption,
+    FileExceedsSizeLimitExecption,
+    FilesExceedsFilesLimitExecption,
+    UnsupportedFileFormatException,
 };
 
 module.exports = Exceptions;

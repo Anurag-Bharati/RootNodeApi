@@ -15,7 +15,7 @@ const verifyUser = (req, res, next) => {
         // req.user = decoded;
         req.user = await User.findById(decoded.id, {
             _id: 1,
-            fname: 1,
+            username: 1,
             avatar: 1,
             connectionCount: 1,
         });

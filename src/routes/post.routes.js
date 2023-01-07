@@ -10,7 +10,7 @@ router
     .get(controller.getAllPost)
     .post(upload.array("mediaFiles"), auth.verifyUser, controller.createPost)
     .put(utils.notImplemented)
-    .delete(controller.deleteAllPost);
+    .delete(auth.verifyUser, controller.deleteAllPost);
 
 router
     .use(auth.verifyUser)

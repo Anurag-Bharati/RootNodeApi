@@ -3,6 +3,7 @@ const {
     User,
     PostLike,
     PostComment,
+    PostCommentLike,
 } = require("../models/models.wrapper");
 const {
     IllegalArgumentException,
@@ -56,7 +57,7 @@ const createPost = async (req, res, next) => {
     if (!caption && !mediaFiles)
         return next(new IllegalArgumentException("Invalid Post parameters"));
 
-    if (isMarkdown == true && mediaFiles && mediaFiles.length > 0) {
+    if (isMarkdown === "true" && mediaFiles && mediaFiles.length > 0) {
         return next(
             new IllegalPostTypeExecption("Markdown cannot contain media files")
         );
@@ -79,7 +80,7 @@ const createPost = async (req, res, next) => {
     }
 
     let type;
-    if (isMarkdown == true) type = "markdown";
+    if (isMarkdown === "true") type = "markdown";
     else if (mediaFiles && mediaFiles.length > 0 && caption) type = "mixed";
     else if (mediaFiles && mediaFiles.length > 0 && !caption) type = "media";
     else type = "text";
@@ -204,6 +205,9 @@ const getComments = async (req, res, next) => {
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
 const deleteAllPost = async (req, res, next) => {
+    (await PostLike.find()).forEach(async (like) => await like.remove());
+    (await PostCommentLike.find()).forEach(async (like) => await like.remove());
+    (await PostComment.find()).forEach(async (cmt) => await cmt.remove());
     (await Post.find()).forEach(async (post) => await post.remove());
     res.json({ success: true, reply: "All post cleared!" });
 };
