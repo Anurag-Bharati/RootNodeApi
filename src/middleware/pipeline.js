@@ -5,6 +5,7 @@ const entryMiddleware = (req, res, next) => {
     logger.log(`[InBound] ${req.method} ${req.path}`);
     next();
 };
+
 const errorMiddleware = (err, req, res, next) => {
     const status = err.statusCode || 400;
     console.log(

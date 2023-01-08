@@ -7,9 +7,9 @@ const {
 } = require("../throwable/exception.rootnode");
 
 /* constraints start */
+const maxFilesCount = 10;
 const maxFileSize = 100 * 1024 * 1024;
 const maxImageSize = 10 * 1024 * 1024;
-const maxFilesCount = 10;
 const whiteListVideoTypes = [".mp4", ".mkv"];
 const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
 const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);

@@ -202,6 +202,48 @@ const getComments = async (req, res, next) => {
     }
 };
 
+const likeUnlikeComment = async (req, res, next) => {
+    if (!req.params.cid) {
+        return next(new IllegalArgumentException("Invalid/Missing Comment Id"));
+    }
+    const comment = await Comment.findById(req.params.cid).select([
+        "_id",
+        "likesCount",
+    ]);
+    if (!comment) {
+        return next(new ResourceNotFoundException("Comment not found"));
+    }
+    const isLiked = await PostCommentLike.findOne({
+        comment: comment._id,
+        user: req.user._id,
+    });
+    if (isLiked) {
+        await PostCommentLike.findOneAndDelete({
+            comment: comment._id,
+            user: req.user._id,
+        });
+        comment.likesCount--;
+        await comment.save();
+        res.status(200).json({
+            success: true,
+            reply: "Comment unliked successfully!",
+            liked: false,
+        });
+    } else {
+        await PostCommentLike.create({
+            comment: comment._id,
+            user: req.user._id,
+        });
+        comment.likesCount++;
+        await comment.save();
+        res.status(200).json({
+            success: true,
+            reply: "Comment liked successfully!",
+            liked: true,
+        });
+    }
+};
+
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
 const deleteAllPost = async (req, res, next) => {
@@ -222,4 +264,5 @@ module.exports = {
     likeUnlikePost,
     getComments,
     addComment,
+    likeUnlikeComment,
 };
