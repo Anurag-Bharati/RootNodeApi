@@ -20,7 +20,7 @@ const login = async (req, res, next) => {
     let now = Math.ceil(new Date().getTime() * 0.001); // in seconds
     const { username, password } = req.body;
     if (!username || !password) {
-        const e = new IllegalArgumentException("Missing required fields.");
+        const e = new IllegalArgumentException("Missing required fields");
         return next(e);
     }
     const user = await User.findOne({ username: username });
@@ -28,7 +28,7 @@ const login = async (req, res, next) => {
     if (!user) {
         return next(
             new EntityNotFoundException(
-                `User with ${username} name does not exists.`
+                `User with ${username} name does not exists`
             )
         );
     }
@@ -70,7 +70,7 @@ const register = async (req, res, next) => {
     const { username, email, password, fname, lname } = req.body;
 
     if (!username || !email || !password || !fname || !lname) {
-        const e = new IllegalArgumentException("Missing required fields.");
+        const e = new IllegalArgumentException("Missing required fields");
         return next(e);
     }
 
@@ -79,7 +79,7 @@ const register = async (req, res, next) => {
     if (user)
         return next(
             new EntityConflictException(
-                `User with the ${username} already exists.`
+                `User with the ${username} already exists`
             )
         );
 

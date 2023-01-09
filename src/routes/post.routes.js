@@ -23,7 +23,7 @@ router
 router
     .use(auth.verifyUser)
     .route("/:pid/likeunlike")
-    .get(utils.notImplemented) // TODO GET POST LIKES W/ USER
+    .get(controller.getPostLiker)
     .post(controller.likeUnlikePost);
 
 router

@@ -13,8 +13,9 @@ const {
 } = require("../throwable/exception.rootnode");
 
 /* constraints start*/
-const postPerPage = 2;
+const postPerPage = 5;
 const commentsPerPage = 5;
+const likerPerPage = 10;
 /* constraints end*/
 
 const getAllPost = async (req, res, next) => {
@@ -146,6 +147,36 @@ const likeUnlikePost = async (req, res, next) => {
     }
 };
 
+const getPostLiker = async (req, res, next) => {
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+
+    const pid = req.params.pid;
+    if (!pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+    // check if post exists
+    const post = await Post.exists({ _id: req.params.pid });
+    if (!post) {
+        return next(new ResourceNotFoundException("Post not found"));
+    }
+    const liker = await PostLike.find({ post: pid })
+        .populate("user", ["username", "showOnlineStatus", "avatar"])
+        .sort("-createdAt")
+        .limit(likerPerPage)
+        .skip((page - 1) * likerPerPage)
+        .exec();
+
+    const count = await PostLike.find({ post: pid }).countDocuments();
+
+    res.status(200).json({
+        success: true,
+        liker: liker,
+        totalPages: Math.ceil(count / likerPerPage),
+        currentPage: Number(page),
+    });
+};
+
 const addComment = async (req, res, next) => {
     if (!req.params.pid) {
         return next(new IllegalArgumentException("Invalid/Missing Post Id"));
@@ -262,6 +293,7 @@ module.exports = {
     deletePostById,
     deleteAllPost,
     likeUnlikePost,
+    getPostLiker,
     getComments,
     addComment,
     likeUnlikeComment,
