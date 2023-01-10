@@ -176,6 +176,35 @@ const getPostLiker = async (req, res, next) => {
         currentPage: Number(page),
     });
 };
+const getPostCommentLiker = async (req, res, next) => {
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+
+    const cid = req.params.cid;
+    if (!cid) {
+        return next(new IllegalArgumentException("Invalid/Missing Comment Id"));
+    }
+    // check if post exists
+    const comment = await PostComment.exists({ _id: cid });
+    if (!comment) {
+        return next(new ResourceNotFoundException("Comment not found"));
+    }
+    const liker = await PostCommentLike.find({ comment: cid })
+        .populate("user", ["username", "showOnlineStatus", "avatar"])
+        .sort("-createdAt")
+        .limit(likerPerPage)
+        .skip((page - 1) * likerPerPage)
+        .exec();
+
+    const count = await PostCommentLike.find({ comment: cid }).countDocuments();
+
+    res.status(200).json({
+        success: true,
+        liker: liker,
+        totalPages: Math.ceil(count / likerPerPage),
+        currentPage: Number(page),
+    });
+};
 
 const addComment = async (req, res, next) => {
     if (!req.params.pid) {
@@ -237,7 +266,7 @@ const likeUnlikeComment = async (req, res, next) => {
     if (!req.params.cid) {
         return next(new IllegalArgumentException("Invalid/Missing Comment Id"));
     }
-    const comment = await Comment.findById(req.params.cid).select([
+    const comment = await PostComment.findById(req.params.cid).select([
         "_id",
         "likesCount",
     ]);
@@ -297,4 +326,5 @@ module.exports = {
     getComments,
     addComment,
     likeUnlikeComment,
+    getPostCommentLiker,
 };

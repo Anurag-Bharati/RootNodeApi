@@ -44,7 +44,7 @@ router
 router
     .use(auth.verifyUser)
     .route("/comment/:cid/likeunlike")
-    .get(utils.notImplemented) // TODO GET COMMENTS LIKES W/ USER
+    .get(controller.getPostCommentLiker)
     .post(controller.likeUnlikeComment);
 
 module.exports = router;
