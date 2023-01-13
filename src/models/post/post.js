@@ -21,6 +21,7 @@ const postSchema = new Schema(
         caption: {
             type: String,
             maxlength: 512,
+            trim: true,
         },
 
         isMarkdown: {

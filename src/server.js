@@ -1,44 +1,41 @@
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const runApp = require("./app.js");
 const logger = require("./utils/logger");
 const pipeline = require("./middleware/pipeline");
 const routes = require("./routes/routes.wrapper");
+const connectDBAndLaunch = require("./config/db");
+const colors = require("colors/safe");
+const utils = require("./utils/utils.js");
 
 // Config
+colors.enable();
 dotenv.config();
 
-// ?
-mongoose.set("strictQuery", false);
-
 const app = runApp();
-const port = process.env.PORT || 3030;
+const PORT = process.env.PORT || 3030;
+const ROOT = process.env.API_URL || "/api/v0";
 
 const startApp = () => {
-    console.log("Connected to MongoDB Server");
     pipeline.init(logger);
     app.use(pipeline.entryMiddleware);
     app.use(pipeline.exitMiddleware);
     /* routing start */
-    app.use("/user", routes.user);
-    app.use("/post", routes.post);
+    app.use(`${ROOT}/user`, routes.user);
+    app.use(`${ROOT}/post`, routes.post);
+    /* fallback routes  */
+    app.get("*", utils.notFound);
+    app.all("*", utils.notImplemented);
     /* routing end */
     app.use(pipeline.errorMiddleware);
-    app.listen(port, () => {
-        console.log("App is running on port: " + port);
-        logger.log("[INFO] App started on port:" + port);
+    app.listen(PORT, () => {
+        console.log(
+            colors.yellow.bold("[INFO]"),
+            "App is running on port".bold,
+            PORT.underline.bold
+        );
+        logger.log("[Info] App started on port:" + PORT);
     });
 };
 
 // Launch
-mongoose
-    .connect(
-        process.env.USECLOUDDB === "0"
-            ? process.env.LOCALDB
-            : process.env.CLOUDDB
-    )
-    .then(() => startApp())
-    .catch((err) => {
-        console.error(err);
-        logger.log(`[ERR] ${err}`);
-    });
+connectDBAndLaunch(startApp);

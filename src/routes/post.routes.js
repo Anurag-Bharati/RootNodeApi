@@ -15,7 +15,7 @@ router
 router
     .use(auth.verifyUser)
     .route("/:id")
-    .get(controller.getPostById) // TODO
+    .get(controller.getPostById)
     .post(utils.notImplemented)
     .put(controller.updatePostById) // TODO
     .delete(controller.deletePostById); // TODO

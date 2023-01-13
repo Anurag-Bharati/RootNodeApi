@@ -13,11 +13,13 @@ const userSchema = new Schema(
             required: [true, "Please enter an username."],
             minlength: [3, "Username must be at least 3 characters."],
             maxlength: [20, "Username must not exceeds 20 characters."],
+            trim: true,
         },
 
         email: {
             type: String,
             required: [true, "Email is required."],
+            trim: true,
         },
 
         emailVerified: {

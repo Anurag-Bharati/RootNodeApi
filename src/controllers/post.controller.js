@@ -42,7 +42,17 @@ const getAllPost = async (req, res, next) => {
     }
 };
 
-const getPostById = (req, res, next) => {};
+const getPostById = async (req, res, next) => {
+    const pid = req.params.id;
+    if (!pid)
+        return next(new IllegalArgumentException("Missing parameter post id"));
+    const post = await Post.findById(pid);
+    if (!post) return next(new ResourceNotFoundException("Post not found"));
+    res.status(200).json({
+        success: true,
+        post: post,
+    });
+};
 const createPost = async (req, res, next) => {
     const {
         caption,
@@ -52,6 +62,7 @@ const createPost = async (req, res, next) => {
         likeable,
         shareable,
     } = req.body;
+
     const mediaFiles = req.files;
     const medias = [];
 

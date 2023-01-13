@@ -20,6 +20,7 @@
     "homepage": "https://github.com/ST6003CEM/t1-backend-web-api-Anurag-Bharati#readme",
     "dependencies": {
         "bcryptjs": "^2.4.3",
+        "colors": "^1.4.0",
         "date-fns": "^2.29.3",
         "dotenv": "^16.0.3",
         "express": "^4.18.2",
