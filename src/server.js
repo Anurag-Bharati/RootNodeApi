@@ -6,7 +6,7 @@ const routes = require("./routes/routes.wrapper");
 const connectDBAndLaunch = require("./config/db");
 const colors = require("colors/safe");
 const utils = require("./utils/utils.js");
-
+const { serveRandom } = require("./utils/foods");
 // Config
 colors.enable();
 dotenv.config();
@@ -34,8 +34,8 @@ const startApp = (showCause) => {
             PORT.underline.bold
         );
         console.log(
-            "\n" + " ROOTNODE ".inverse.bold,
-            "- waiting for requests... \n"
+            "\n" + " RootNodeApi ".inverse.bold,
+            `- waiting to serve ${serveRandom()}  \n`
         );
         logger.log("[Info] App started on port:" + PORT);
     });

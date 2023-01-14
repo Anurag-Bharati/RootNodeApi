@@ -36,7 +36,6 @@ const exitMiddleware = (req, res, next) => {
         const who = req.user ? req.user._id.toString() : "Anonymous-User";
         console.log(
             res.statusCode >= 400 ? "  ↪".bold : "↪".bold,
-            // "↪".bold,
             " OutBound ".bgGreen.bold,
             `${res.statusCode} ${res.statusMessage} → ${who}\n`.green
         );

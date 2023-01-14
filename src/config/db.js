@@ -22,6 +22,10 @@ const connectDBAndLaunch = async (launch) => {
             ? process.env.CLOUDDB
             : process.env.LOCALDB
     );
+
+    // Clear and move to (0, 0)
+    process.stdout.write("\u001b[2J\u001b[0;0H");
+    // fallback clear
     console.clear();
     const params = {};
     params.V = process.env.VERSION || "N/A";
