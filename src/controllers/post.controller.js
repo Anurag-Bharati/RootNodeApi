@@ -25,18 +25,19 @@ const getAllPost = async (req, res, next) => {
     // check #1
     page = page > 0 ? page : 1;
     try {
-        // execute query with page and limit values
-        const posts = await Post.find()
-            .sort("-createdAt")
-            .limit(postPerPage)
-            .skip((page - 1) * postPerPage)
-            .exec();
-        // get total documents in the Posts collection
-        const count = await Post.countDocuments();
-
+        const x = await Promise.all([
+            // execute query with page and limit values
+            Post.find()
+                .sort("-createdAt")
+                .limit(postPerPage)
+                .skip((page - 1) * postPerPage)
+                .exec(),
+            // get total documents in the Posts collection
+            Post.countDocuments(),
+        ]);
         res.json({
-            posts,
-            totalPages: Math.ceil(count / postPerPage),
+            posts: x[0],
+            totalPages: Math.ceil(x[1] / postPerPage),
             currentPage: Number(page),
         });
     } catch (_) {
@@ -101,7 +102,8 @@ const createPost = async (req, res, next) => {
     else if (mediaFiles && mediaFiles.length > 0 && !caption) type = "media";
     else type = "text";
 
-    const post = await Post.create({
+    // Independent Operations: Post Creation and Find User
+    const post = Post.create({
         type: type,
         owner: req.user._id,
         caption: caption,
@@ -113,10 +115,14 @@ const createPost = async (req, res, next) => {
         shareable: shareable,
     });
 
+    const user = User.findById(req.user._id).select("_id postsCount");
+
+    // concurrency
+    const x = await Promise.all([post, user]);
+
     // increase user post count
-    const user = await User.findById(req.user._id).select("_id postsCount");
-    user.postsCount++;
-    await user.save();
+    x[1].postsCount++;
+    await x[1].save();
 
     // send feedback
     res.status(201).json({
@@ -142,18 +148,25 @@ const likeUnlikePost = async (req, res, next) => {
         user: req.user._id,
     });
     if (isLiked) {
-        await PostLike.findOneAndDelete({ post: post._id, user: req.user._id });
         post.likesCount--;
-        await post.save();
+
+        // concurrency
+        await Promise.all([
+            PostLike.findOneAndDelete({ post: post._id, user: req.user._id }),
+            post.save(),
+        ]);
+
         res.status(200).json({
             success: true,
             reply: "Post unliked successfully!",
             liked: false,
         });
     } else {
-        await PostLike.create({ post: post._id, user: req.user._id });
         post.likesCount++;
-        await post.save();
+        await Promise.all([
+            PostLike.create({ post: post._id, user: req.user._id }),
+            post.save(),
+        ]);
         res.status(200).json({
             success: true,
             reply: "Post liked successfully!",
@@ -175,19 +188,19 @@ const getPostLiker = async (req, res, next) => {
     if (!post) {
         return next(new ResourceNotFoundException("Post not found"));
     }
-    const liker = await PostLike.find({ post: pid })
+    const liker = PostLike.find({ post: pid })
         .populate("user", ["username", "showOnlineStatus", "avatar"])
         .sort("-createdAt")
         .limit(likerPerPage)
         .skip((page - 1) * likerPerPage)
         .exec();
 
-    const count = await PostLike.find({ post: pid }).countDocuments();
+    const count = PostLike.find({ post: pid }).countDocuments();
 
     res.status(200).json({
         success: true,
-        liker: liker,
-        totalPages: Math.ceil(count / likerPerPage),
+        liker: await liker,
+        totalPages: Math.ceil((await count) / likerPerPage),
         currentPage: Number(page),
     });
 };
@@ -204,19 +217,19 @@ const getPostCommentLiker = async (req, res, next) => {
     if (!comment) {
         return next(new ResourceNotFoundException("Comment not found"));
     }
-    const liker = await PostCommentLike.find({ comment: cid })
+    const liker = PostCommentLike.find({ comment: cid })
         .populate("user", ["username", "showOnlineStatus", "avatar"])
         .sort("-createdAt")
         .limit(likerPerPage)
         .skip((page - 1) * likerPerPage)
         .exec();
 
-    const count = await PostCommentLike.find({ comment: cid }).countDocuments();
+    const count = PostCommentLike.find({ comment: cid }).countDocuments();
 
     res.status(200).json({
         success: true,
-        liker: liker,
-        totalPages: Math.ceil(count / likerPerPage),
+        liker: await liker,
+        totalPages: Math.ceil((await count) / likerPerPage),
         currentPage: Number(page),
     });
 };
@@ -236,17 +249,22 @@ const addComment = async (req, res, next) => {
     if (!post) {
         return next(new ResourceNotFoundException("Post not found"));
     }
-    comment = await PostComment.create({
-        post: post._id,
-        user: req.user._id,
-        comment: req.body.comment,
-    });
+
     post.commentsCount++;
-    await post.save();
+
+    const x = await Promise.all([
+        PostComment.create({
+            post: post._id,
+            user: req.user._id,
+            comment: req.body.comment,
+        }),
+        post.save(),
+    ]);
+
     res.status(200).json({
         success: true,
         reply: "Comment posted!",
-        comment: comment,
+        comment: x[0],
     });
 };
 
@@ -258,18 +276,18 @@ const getComments = async (req, res, next) => {
     page = page > 0 ? page : 1;
 
     try {
-        const comments = await PostComment.find()
+        const comments = PostComment.find()
             .sort("-createdAt")
             .limit(commentsPerPage)
             .skip((page - 1) * commentsPerPage)
             .exec();
 
-        const count = await PostComment.countDocuments();
+        const count = PostComment.countDocuments();
 
         res.json({
             success: true,
-            comments: comments,
-            totalPages: Math.ceil(count / commentsPerPage),
+            comments: await comments,
+            totalPages: Math.ceil((await count) / commentsPerPage),
             currentPage: Number(page),
         });
     } catch (_) {
@@ -293,24 +311,30 @@ const likeUnlikeComment = async (req, res, next) => {
         user: req.user._id,
     });
     if (isLiked) {
-        await PostCommentLike.findOneAndDelete({
-            comment: comment._id,
-            user: req.user._id,
-        });
         comment.likesCount--;
-        await comment.save();
+        await Promise.all([
+            PostCommentLike.findOneAndDelete({
+                comment: comment._id,
+                user: req.user._id,
+            }),
+            comment.save(),
+        ]);
         res.status(200).json({
             success: true,
             reply: "Comment unliked successfully!",
             liked: false,
         });
     } else {
-        await PostCommentLike.create({
-            comment: comment._id,
-            user: req.user._id,
-        });
         comment.likesCount++;
-        await comment.save();
+
+        await Promise.all([
+            PostCommentLike.create({
+                comment: comment._id,
+                user: req.user._id,
+            }),
+            comment.save(),
+        ]);
+
         res.status(200).json({
             success: true,
             reply: "Comment liked successfully!",
@@ -322,10 +346,16 @@ const likeUnlikeComment = async (req, res, next) => {
 const updatePostById = (req, res, next) => {};
 const deletePostById = (req, res, next) => {};
 const deleteAllPost = async (req, res, next) => {
-    (await PostLike.find()).forEach(async (like) => await like.remove());
-    (await PostCommentLike.find()).forEach(async (like) => await like.remove());
-    (await PostComment.find()).forEach(async (cmt) => await cmt.remove());
-    (await Post.find()).forEach(async (post) => await post.remove());
+    const dp = await Promise.all([
+        PostLike.find(),
+        PostCommentLike.find(),
+        PostComment.find(),
+        Post.find(),
+    ]);
+    dp[0].forEach(async (pl) => pl.remove());
+    dp[1].forEach(async (cl) => cl.remove());
+    dp[2].forEach(async (c) => c.remove());
+    dp[3].forEach(async (p) => p.remove());
     res.json({ success: true, reply: "All post cleared!" });
 };
 

@@ -1,11 +1,16 @@
+const colors = require("colors/safe");
 const dotenv = require("dotenv");
 const runApp = require("./app.js");
-const colors = require("colors/safe");
 const utils = require("./utils/utils.js");
 const { serveRandom } = require("./utils/foods");
 const routes = require("./routes/routes.wrapper");
 const connectDBAndLaunch = require("./config/db");
 const { errorMiddleware } = require("./middleware/pipeline");
+
+console.log(
+    "\n" + " RootNode ".inverse.bold,
+    "Launching Service. Please Wait...\n".bold
+);
 
 // Config
 colors.enable();
@@ -35,10 +40,10 @@ const initialLogs = () => {
     );
     console.log(
         "\n" + " RootNodeApi ".inverse.bold,
-        `- waiting to serve ${serveRandom()}  \n`
+        `- waiting to serve ${serveRandom()}  \n`.bold
     );
     logger.log("[Info] App started on port:" + PORT);
 };
 
 // Launch
-connectDBAndLaunch(startApp);
+setTimeout(() => connectDBAndLaunch(startApp), 1000);

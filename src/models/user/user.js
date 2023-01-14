@@ -86,7 +86,6 @@ userSchema.methods.generateToken = async function () {
     );
 
     const decodedData = jwt.decode(token);
-
     const authToken = await AuthToken.create({
         token: token,
         user: this._id,
@@ -115,7 +114,6 @@ userSchema.methods.matchPassword = async function (password) {
 
 userSchema.pre("save", function (next) {
     if (this.isModified("username")) this.usernameChangedAt = Date.now();
-
     next();
 });
 

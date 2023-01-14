@@ -37,7 +37,6 @@ const login = async (req, res, next) => {
     }
 
     const isMatch = await user.matchPassword(password);
-
     if (!isMatch) {
         const e = new FieldNotMatchedException("Incorrect password");
         return next(e);
@@ -88,11 +87,11 @@ const register = async (req, res, next) => {
     if (user)
         return next(
             new EntityConflictException(
-                `User with the ${username} already exists`
+                `User with username ${username} already exists`
             )
         );
 
-    const newUser = await User.create({ username, email, password });
+    const newUser = await User({ username, email, password });
     newUser.password = await newUser.encryptPassword(password);
 
     const profile = new Profile();
@@ -109,6 +108,7 @@ const register = async (req, res, next) => {
         `User registered with id: ${newUser._id} at ${now.toLocaleString()}`
             .cyan
     );
+
     res.status(201).json({
         success: true,
         reply: "User registered successfully!",
