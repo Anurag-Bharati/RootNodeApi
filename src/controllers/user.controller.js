@@ -1,4 +1,5 @@
 const { User, Profile, AuthToken } = require("../models/models.wrapper");
+require("colors");
 const {
     EntityNotFoundException,
     EntityConflictException,
@@ -17,7 +18,9 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 const login = async (req, res, next) => {
-    let now = Math.ceil(new Date().getTime() * 0.001); // in seconds
+    let now = new Date();
+    let nowInSec = Math.ceil(now.getTime() * 0.001);
+
     const { username, password } = req.body;
     if (!username || !password) {
         const e = new IllegalArgumentException("Missing required fields");
@@ -54,10 +57,15 @@ const login = async (req, res, next) => {
         authToken = await user.generateToken();
     }
 
-    if (now > authToken.expiresAt) {
+    if (nowInSec > authToken.expiresAt) {
         await authToken.remove();
         authToken = await user.generateToken();
     }
+    console.log(
+        "↪".bold,
+        " UserLoggedIn ".bgCyan.bold,
+        `${user._id} at ${now.toLocaleString()}`.cyan
+    );
     res.status(200).json({
         success: true,
         reply: "User logged in succesfully",
@@ -67,6 +75,7 @@ const login = async (req, res, next) => {
     });
 };
 const register = async (req, res, next) => {
+    let now = new Date();
     const { username, email, password, fname, lname } = req.body;
 
     if (!username || !email || !password || !fname || !lname) {
@@ -94,6 +103,12 @@ const register = async (req, res, next) => {
     await newUser.save();
     await profile.save();
 
+    console.log(
+        "↪".bold,
+        " UserCreated ".bgCyan.bold,
+        `User registered with id: ${newUser._id} at ${now.toLocaleString()}`
+            .cyan
+    );
     res.status(201).json({
         success: true,
         reply: "User registered successfully!",

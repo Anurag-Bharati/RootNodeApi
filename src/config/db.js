@@ -27,13 +27,13 @@ const connectDBAndLaunch = async (launch) => {
     process.stdout.write("\u001b[2J\u001b[0;0H");
     // fallback clear
     console.clear();
-    const params = {};
-    params.V = process.env.VERSION || "N/A";
-    params.ENV = process.env.ENV || "N/A";
-    params.DS = process.env.USECLOUDDB === "1" ? "Cloud" : "Local";
-    params.API_ROOT = process.env.API_URL || "/api/v0";
+    const bannerParams = {};
+    bannerParams.V = process.env.VERSION || "N/A";
+    bannerParams.ENV = process.env.ENV || "N/A";
+    bannerParams.DS = process.env.USECLOUDDB === "1" ? "Cloud" : "Local";
+    bannerParams.API_ROOT = process.env.API_URL || "/api/v0";
 
-    const banner = generateBanner(params);
+    const banner = generateBanner(bannerParams);
     console.log(banner);
     console.log(
         "[INFO]".yellow.bold,
@@ -45,7 +45,8 @@ const connectDBAndLaunch = async (launch) => {
     args.forEach((a) => {
         if (a === "showCause") showCause = true;
     });
-    launch(showCause);
+    const params = { showCause };
+    launch(params);
 };
 
 module.exports = connectDBAndLaunch;

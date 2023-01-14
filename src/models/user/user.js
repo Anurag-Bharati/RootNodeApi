@@ -1,6 +1,7 @@
 const { Schema, model } = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+require("colors");
 
 const AuthToken = require("./user.authtoken");
 
@@ -94,11 +95,9 @@ userSchema.methods.generateToken = async function () {
     });
 
     console.log(
-        "\x1b[36m",
-        "[TokenGenerated] New token has been assigned to " +
-            "\x1b[90m" +
-            this._id +
-            "\x1b[0m"
+        "↪".bold,
+        " TokenGenerated ".bgCyan.bold,
+        `New token has been assigned to ${this._id}`.cyan
     );
 
     return authToken;
@@ -116,6 +115,7 @@ userSchema.methods.matchPassword = async function (password) {
 
 userSchema.pre("save", function (next) {
     if (this.isModified("username")) this.usernameChangedAt = Date.now();
+
     next();
 });
 
