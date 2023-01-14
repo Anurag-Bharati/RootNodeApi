@@ -12,6 +12,8 @@ const {
     IllegalPostTypeExecption,
 } = require("../throwable/exception.rootnode");
 
+const { isValidObjectId } = require("mongoose");
+
 /* constraints start*/
 const postPerPage = 5;
 const commentsPerPage = 5;
@@ -46,6 +48,8 @@ const getPostById = async (req, res, next) => {
     const pid = req.params.id;
     if (!pid)
         return next(new IllegalArgumentException("Missing parameter post id"));
+    if (!isValidObjectId(pid))
+        return next(new IllegalArgumentException("Invalid Post Id"));
     const post = await Post.findById(pid);
     if (!post) return next(new ResourceNotFoundException("Post not found"));
     res.status(200).json({

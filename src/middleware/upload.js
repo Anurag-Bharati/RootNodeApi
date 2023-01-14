@@ -25,7 +25,7 @@ const multerStorage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const isMarkdown = req.body.isMarkdown;
+    const { isMarkdown } = req.body;
     if (isMarkdown === "true")
         return cb(
             new IllegalPostTypeExecption("Markdown cannot contain media files"),

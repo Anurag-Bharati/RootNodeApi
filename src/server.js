@@ -12,11 +12,11 @@ colors.enable();
 dotenv.config();
 
 const app = runApp();
-const PORT = process.env.PORT || 3030;
+const PORT = process.env.PORT || 3000;
 const ROOT = process.env.API_URL || "/api/v0";
 
-const startApp = () => {
-    pipeline.init(logger);
+const startApp = (showCause) => {
+    pipeline.init(logger, showCause);
     app.use(pipeline.entryMiddleware);
     app.use(pipeline.exitMiddleware);
     /* routing start */
@@ -32,6 +32,10 @@ const startApp = () => {
             colors.yellow.bold("[INFO]"),
             "App is running on port".bold,
             PORT.underline.bold
+        );
+        console.log(
+            "\n" + " ROOTNODE ".inverse.bold,
+            "- waiting for requests... \n"
         );
         logger.log("[Info] App started on port:" + PORT);
     });
