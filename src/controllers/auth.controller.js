@@ -57,10 +57,12 @@ const handleLogin = async (req, res, next) => {
             " UserLoggedIn ".bgCyan.bold,
             `${user._id} at ${now.toLocaleString()}`.cyan
         );
-
+        // TODO Add secure:true in production
         res.cookie("token", session.token, {
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
+            maxAge: process.env.HTTP_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+            sameSite: "None",
+            // secure: true,
         });
 
         res.json({
@@ -120,6 +122,18 @@ const handleRegister = async (req, res, next) => {
     }
 };
 
+const handleLogout = async (req, res, next) => {
+    const cookies = req.cookies;
+    if (!cookies?.token) return res.sendStatus(204);
+    const refreshToken = cookies.token;
+    // clear session from DB
+    const foundSession = await UserSession.findOne({ token: refreshToken });
+    if (foundSession) await foundSession.remove();
+    // TODO Add secure:true in production
+    res.clearCookie("token", { httpOnly: true, sameSite: "None" });
+    res.sendStatus(204);
+};
+
 // TODO Handle exception as well
 const handleRefreshToken = async (req, res, next) => {
     const cookies = req.cookies;
@@ -130,7 +144,6 @@ const handleRefreshToken = async (req, res, next) => {
     if (!foundSession) return res.sendStatus(403);
     const foundUser = await User.findById(foundSession.user);
     if (!foundUser) return res.sendStatus(404);
-    console.log(foundUser);
     jwt.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
@@ -153,4 +166,5 @@ module.exports = {
     handleLogin,
     handleRegister,
     handleRefreshToken,
+    handleLogout,
 };
