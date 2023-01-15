@@ -11,8 +11,6 @@ const verifyUser = (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next(err);
-        // setting req.user val
-        // req.user = decoded;
         req.user = await User.findById(decoded.id, {
             _id: 1,
             username: 1,

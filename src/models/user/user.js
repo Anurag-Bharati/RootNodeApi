@@ -80,7 +80,7 @@ const userSchema = new Schema(
 
 userSchema.methods.generateRefreshToken = async function () {
     const token = jwt.sign(
-        { id: this._id, username: this.username, role: this.role },
+        { _id: this._id, username: this.username, role: this.role },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN }
     );
@@ -103,7 +103,7 @@ userSchema.methods.generateRefreshToken = async function () {
 };
 userSchema.methods.generateAccessToken = async function () {
     const token = jwt.sign(
-        { id: this._id, username: this.username, role: this.role },
+        { _id: this._id, username: this.username, role: this.role },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
     );

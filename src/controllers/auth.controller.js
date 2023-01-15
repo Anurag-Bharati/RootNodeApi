@@ -1,6 +1,6 @@
 const { User, Profile, UserSession } = require("../models/models.wrapper");
+const jwt = require("jsonwebtoken");
 require("colors");
-
 const {
     EntityNotFoundException,
     EntityConflictException,
@@ -38,34 +38,43 @@ const handleLogin = async (req, res, next) => {
                 reply: "Account not active",
             });
         }
-        // Check for refresh token sth idk atm FIX_THIS
+
         let session = await UserSession.findOne({ user: user._id });
 
         if (!session) {
-            //TODO
-            throw new SessionExpireException();
+            session = await user.generateRefreshToken();
         }
 
-        if (nowInSec > authToken.expiresAt) {
-            await authToken.remove();
-            authToken = await user.generateToken();
+        if (nowInSec > session.expiresAt) {
+            await session.remove();
+            authToken = await session.generateToken();
         }
+
+        let accessToken = await user.generateAccessToken();
+
         console.log(
             "↪".bold,
             " UserLoggedIn ".bgCyan.bold,
             `${user._id} at ${now.toLocaleString()}`.cyan
         );
-        res.status(200).json({
+
+        res.cookie("token", session.token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        res.json({
             success: true,
             reply: "User logged in succesfully",
+            role: user.role,
             accountStatus: user.status,
-            token: authToken.token,
-            expiresAt: authToken.expiresAt,
+            accessToken: accessToken,
         });
     } catch (err) {
         next(err);
     }
 };
+
 const handleRegister = async (req, res, next) => {
     let now = new Date();
     const { username, email, password, fname, lname } = req.body;
@@ -104,14 +113,44 @@ const handleRegister = async (req, res, next) => {
             success: true,
             reply: "User registered successfully!",
             username: newUser.username,
-            userId: newUser._id,
+            user: newUser._id,
         });
     } catch (err) {
         next(err);
     }
 };
 
+// TODO Handle exception as well
+const handleRefreshToken = async (req, res, next) => {
+    const cookies = req.cookies;
+    if (!cookies?.token) return res.sendStatus(401);
+    const refreshToken = cookies.token;
+    // checking for a session. Alternatively  get data from decoded
+    const foundSession = await UserSession.findOne({ token: refreshToken });
+    if (!foundSession) return res.sendStatus(403);
+    const foundUser = await User.findById(foundSession.user);
+    if (!foundUser) return res.sendStatus(404);
+    console.log(foundUser);
+    jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+        async (err, decoded) => {
+            if (err) return next(err);
+            if (!foundUser._id.equals(decoded._id)) return res.sendStatus(403);
+            const accessToken = await foundUser.generateAccessToken();
+            res.json({
+                success: true,
+                reply: "Access token renewed",
+                accountStatus: foundUser.status,
+                role: foundUser.role,
+                accessToken: accessToken,
+            });
+        }
+    );
+};
+
 module.exports = {
     handleLogin,
     handleRegister,
+    handleRefreshToken,
 };

@@ -15,4 +15,9 @@ router
     .post(controller.handleLogin)
     .put(utils.notImplemented);
 
+router
+    .route("/refresh")
+    .get(controller.handleRefreshToken)
+    .post(controller.handleLogin)
+    .put(utils.notImplemented);
 module.exports = router;
