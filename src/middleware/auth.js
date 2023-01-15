@@ -23,4 +23,22 @@ const verifyUser = (req, res, next) => {
     });
 };
 
-module.exports = { verifyUser };
+const checkUserOrAnonymous = (req, res, next) => {
+    if (!req.headers.authorization) return next();
+
+    token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+        if (err) return next();
+        // setting req.user val
+        // req.user = decoded;
+        req.user = await User.findById(decoded.id, {
+            _id: 1,
+            username: 1,
+            avatar: 1,
+            connectionCount: 1,
+        });
+        next();
+    });
+};
+
+module.exports = { verifyUser, checkUserOrAnonymous };

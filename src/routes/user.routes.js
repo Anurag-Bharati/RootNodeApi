@@ -2,11 +2,19 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/user.controller");
 const utils = require("../utils/utils");
+const auth = require("../middleware/auth");
 
 router
     .route("/register")
     .get(utils.notImplemented)
     .post(controller.register)
+    .put(utils.notImplemented)
+    .delete(utils.notImplemented);
+
+router
+    .route("/whoami")
+    .get(auth.checkUserOrAnonymous, controller.whoAmI)
+    .post(utils.notImplemented)
     .put(utils.notImplemented)
     .delete(utils.notImplemented);
 

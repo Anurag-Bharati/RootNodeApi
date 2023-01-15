@@ -7,11 +7,6 @@ const routes = require("./routes/routes.wrapper");
 const connectDBAndLaunch = require("./config/db");
 const { errorMiddleware } = require("./middleware/pipeline");
 
-console.log(
-    "\n" + " RootNode ".inverse.bold,
-    "Launching Service. Please Wait...\n".bold
-);
-
 // Config
 colors.enable();
 dotenv.config();
@@ -44,6 +39,30 @@ const initialLogs = () => {
     );
     logger.log("[Info] App started on port:" + PORT);
 };
+function printProgress(progress) {
+    process.stdout.write(progress);
+}
+
+// hide cursor
+process.stdout.write("\u001B[?25l");
+process.stdout.write(
+    "\n" + " RootNode ".inverse.bold + " Launching Service. Please Wait".bold
+);
+
+let progress = 0;
+const switchAt = 30;
+const interval = setInterval(() => {
+    progress += 10;
+    printProgress(".".bold);
+    if (progress % switchAt == 0) {
+        process.stdout.moveCursor(-3);
+        process.stdout.write("   ");
+        process.stdout.moveCursor(-3);
+    }
+    if (progress >= 80) {
+        clearInterval(interval);
+    }
+}, 50);
 
 // Launch
-setTimeout(() => connectDBAndLaunch(startApp), 1000);
+setTimeout(() => connectDBAndLaunch(startApp), 500);

@@ -128,7 +128,7 @@ const createPost = async (req, res, next) => {
     res.status(201).json({
         success: true,
         message: "Post created successfully!",
-        post: post,
+        post: x[0],
     });
 };
 

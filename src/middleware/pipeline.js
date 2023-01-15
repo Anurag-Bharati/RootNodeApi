@@ -7,8 +7,10 @@ const init = (loggerInstance, _showCause) => {
 
 const entryMiddleware = (req, res, next) => {
     console.log(
-        " InBound ".bgYellow.bold,
-        `${req.method} ${req.path} ← ${req.ip}`.yellow
+        " InBound ".bgYellow.black.bold,
+        `${req.method} ${req.path} ← ${req.ip.substring(
+            req.ip.lastIndexOf(":") + 1
+        )}`.yellow
     );
     logger.log(`[InBound] ${req.method} ${req.path}`);
     next();
@@ -18,7 +20,7 @@ const errorMiddleware = (err, req, res, next) => {
     const status = err.statusCode || 400;
     console.log(
         "↪".bold,
-        ` ${err.name} `.bgRed.bold,
+        ` ${err.name} `.bgRed.black.bold,
         `${status}: ${err.message}.`.red,
         showCause ? `Caused by ${req.method} at ${req.path}`.red : ""
     );
@@ -36,7 +38,7 @@ const exitMiddleware = (req, res, next) => {
         const who = req.user ? req.user._id.toString() : "Anonymous-User";
         console.log(
             res.statusCode >= 400 ? "  ↪".bold : "↪".bold,
-            " OutBound ".bgGreen.bold,
+            " OutBound ".bgGreen.black.bold,
             `${res.statusCode} ${res.statusMessage} → ${who}\n`.green
         );
         logger.log(

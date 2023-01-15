@@ -5,6 +5,7 @@ const logger = require("./utils/logger");
 const staticPath = path.join(__dirname, "/../", "/public/");
 const runApp = (params) => {
     const app = express();
+    app.set("trust proxy", true);
     pipeline.init(logger, params.showCause);
     app.use(pipeline.entryMiddleware);
     app.use(pipeline.exitMiddleware);
