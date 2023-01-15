@@ -17,6 +17,7 @@ const ROOT = process.env.API_URL || "/api/v0";
 const startApp = (params) => {
     const app = runApp(params);
     /* routing start */
+    app.use(`${ROOT}/auth`, routes.auth);
     app.use(`${ROOT}/user`, routes.user);
     app.use(`${ROOT}/post`, routes.post);
     /* fallback routes  */

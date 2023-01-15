@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const authTokenSchema = new Schema(
+const refreshTokenSchema = new Schema(
     {
         token: {
             type: String,
@@ -23,6 +23,6 @@ const authTokenSchema = new Schema(
     { timestamps: true }
 );
 
-const AuthToken = model("AuthToken", authTokenSchema);
+const UserSession = model("UserSession", refreshTokenSchema);
 
-module.exports = AuthToken;
+module.exports = UserSession;
