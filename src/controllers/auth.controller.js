@@ -139,7 +139,7 @@ const handleRefreshToken = async (req, res, next) => {
     const cookies = req.cookies;
     if (!cookies?.token) return res.sendStatus(401);
     const refreshToken = cookies.token;
-    // checking for a session. Alternatively  get data from decoded
+    // checking for a session. Alternatively get data from decoded
     const foundSession = await UserSession.findOne({ token: refreshToken });
     if (!foundSession) return res.sendStatus(403);
     const foundUser = await User.findById(foundSession.user);
@@ -153,7 +153,7 @@ const handleRefreshToken = async (req, res, next) => {
             const accessToken = await foundUser.generateAccessToken();
             res.json({
                 success: true,
-                reply: "Access token renewed",
+                reply: "Access-Token renewed",
                 accountStatus: foundUser.status,
                 role: foundUser.role,
                 accessToken: accessToken,
