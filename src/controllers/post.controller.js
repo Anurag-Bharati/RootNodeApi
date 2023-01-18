@@ -36,6 +36,7 @@ const getAllPost = async (req, res, next) => {
             Post.countDocuments(),
         ]);
         res.json({
+            success: true,
             posts: x[0],
             totalPages: Math.ceil(x[1] / postPerPage),
             currentPage: Number(page),

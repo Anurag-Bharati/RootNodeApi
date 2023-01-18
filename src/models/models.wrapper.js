@@ -10,4 +10,6 @@ models.PostLike = require("./post/post.like");
 models.PostComment = require("./post/post.comment");
 models.PostCommentLike = require("./post/post.comment.like");
 
+models.Connection = require("./user/user.connection");
+
 module.exports = models;
