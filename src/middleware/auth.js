@@ -12,7 +12,7 @@ const verifyUser = (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next(err);
-        const user = await User.findById(decoded.id, {
+        const user = await User.findById(decoded._id, {
             _id: 1,
             username: 1,
             avatar: 1,
@@ -29,7 +29,7 @@ const checkUserOrAnonymous = (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next();
-        req.user = await User.findById(decoded.id, {
+        req.user = await User.findById(decoded._id, {
             _id: 1,
             username: 1,
             avatar: 1,
@@ -39,4 +39,19 @@ const checkUserOrAnonymous = (req, res, next) => {
     });
 };
 
-module.exports = { verifyUser, checkUserOrAnonymous };
+const isAdmin = (req, res, next) => {
+    if (!req.user) return next(new PermissionError("Missing user"));
+    if (req.user.role !== "admin")
+        return next(new PermissionError("Elevated Permission required: Admin"));
+    next();
+};
+const isMod = (req, res, next) => {
+    if (!req.user) return next(new PermissionError("Missing user"));
+    if (req.user.role !== "moderator")
+        return next(
+            new PermissionError("Elevated Permission required: Moderator")
+        );
+    next();
+};
+
+module.exports = { verifyUser, isAdmin, isMod, checkUserOrAnonymous };
