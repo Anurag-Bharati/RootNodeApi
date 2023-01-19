@@ -3,8 +3,6 @@ const { IllegalArgumentException } = require("../throwable/exception.rootnode");
 
 /* constraints start*/
 const connPerPage = 5;
-const commentsPerPage = 5;
-const likerPerPage = 10;
 /* constraints end*/
 
 const getAllConnections = async (req, res, next) => {

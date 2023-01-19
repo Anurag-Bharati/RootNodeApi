@@ -8,7 +8,7 @@ const upload = require("../middleware/upload");
 router
     .route("/")
     .get(controller.getAllPost)
-    .post(upload.array("mediaFiles"), auth.verifyUser, controller.createPost)
+    .post(auth.verifyUser, upload.array("mediaFiles"), controller.createPost)
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllPost);
 
@@ -17,7 +17,7 @@ router
     .route("/:id")
     .get(controller.getPostById)
     .post(utils.notImplemented)
-    .put(controller.updatePostById) // TODO
+    .put(upload.array("mediaFiles"), controller.updatePostById)
     .delete(controller.deletePostById); // TODO
 
 router

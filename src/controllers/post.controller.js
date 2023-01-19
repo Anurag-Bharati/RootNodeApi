@@ -70,17 +70,18 @@ const createPost = async (req, res, next) => {
     } = req.body;
 
     const mediaFiles = req.files;
-    const medias = [];
+    const hasMedia = mediaFiles?.length > 0;
 
-    if (!caption && !mediaFiles)
+    if (!caption && !hasMedia)
         return next(new IllegalArgumentException("Invalid Post parameters"));
 
-    if (isMarkdown === "true" && mediaFiles && mediaFiles.length > 0) {
+    if (isMarkdown === "true" && hasMedia) {
         return next(
             new IllegalPostTypeExecption("Markdown cannot contain media files")
         );
     }
-    if (mediaFiles && mediaFiles.length > 0) {
+    if (hasMedia) {
+        const medias = [];
         mediaFiles.forEach((media) => {
             if (!media.path)
                 return next(
@@ -344,7 +345,57 @@ const likeUnlikeComment = async (req, res, next) => {
     }
 };
 
-const updatePostById = (req, res, next) => {};
+const updatePostById = async (req, res, next) => {
+    const pid = req.params.id;
+    const mediaFiles = req.files;
+    const isMarkdown = req.body.isMarkdown;
+
+    if (!pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+
+    try {
+        const post = await Post.findById(pid);
+        const hasMedia = mediaFiles?.length > 0;
+        if (!post) throw new ResourceNotFoundException("Post not found");
+        const type = post.type;
+        if ((type === "markdown" && hasMedia) || (isMarkdown && hasMedia))
+            throw new IllegalPostTypeExecption(
+                "Markdown cannot have media files"
+            );
+
+        // #BUG FIX_THIS: Add photo overwrite previous
+        // Possible soln: Send unselected MediaID in seperate field -
+        // or vice-versa. Then Append link to newMedia[].
+        if (hasMedia) {
+            const newMedias = [];
+            mediaFiles.forEach((media) => {
+                if (!media.path)
+                    throw new ResourceNotFoundException("Media url not found");
+                if (!media.mimetype)
+                    throw new InvalidMediaTypeException(
+                        "Media type not specified"
+                    );
+                newMedias.push({
+                    url: media.path,
+                    type: media.mimetype.split("/")[0],
+                });
+            });
+            // Add field to body
+            req.body.mediaFiles = newMedias;
+        }
+
+        const updatedPost = await Post.findByIdAndUpdate(
+            pid,
+            { $set: req.body },
+            { new: true }
+        );
+        res.json({ success: true, data: updatedPost });
+    } catch (err) {
+        next(err);
+    }
+};
+
 const deletePostById = (req, res, next) => {};
 const deleteAllPost = async (req, res, next) => {
     const dp = await Promise.all([
@@ -373,4 +424,5 @@ module.exports = {
     addComment,
     likeUnlikeComment,
     getPostCommentLiker,
+    updatePostById,
 };
