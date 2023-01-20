@@ -18,7 +18,7 @@ router
     .get(controller.getPostById)
     .post(utils.notImplemented)
     .put(upload.array("mediaFiles"), controller.updatePostById)
-    .delete(controller.deletePostById); // TODO
+    .delete(controller.deletePostById);
 
 router
     .use(auth.verifyUser)
@@ -37,9 +37,9 @@ router
 router
     .use(auth.verifyUser)
     .route("/comment/:cid")
-    .get(utils.notImplemented) // TODO
-    .put(utils.notImplemented) // TODO
-    .delete(utils.notImplemented); // TODO
+    .get(controller.getCommentByID) // TODO
+    .put(controller.updateCommentByID)
+    .delete(controller.deleteCommentById);
 
 router
     .use(auth.verifyUser)

@@ -71,6 +71,7 @@ const createPost = async (req, res, next) => {
 
     const mediaFiles = req.files;
     const hasMedia = mediaFiles?.length > 0;
+    const medias = [];
 
     if (!caption && !hasMedia)
         return next(new IllegalArgumentException("Invalid Post parameters"));
@@ -81,7 +82,6 @@ const createPost = async (req, res, next) => {
         );
     }
     if (hasMedia) {
-        const medias = [];
         mediaFiles.forEach((media) => {
             if (!media.path)
                 return next(
@@ -270,6 +270,58 @@ const addComment = async (req, res, next) => {
     });
 };
 
+const getCommentByID = async (req, res, next) => {
+    const cid = req.params.cid;
+    if (!cid)
+        return next(
+            new IllegalArgumentException("Missing parameter comment id")
+        );
+    if (!isValidObjectId(cid))
+        return next(new IllegalArgumentException("Invalid Comment Id"));
+    const comment = await PostComment.findById(cid);
+    if (!comment)
+        return next(new ResourceNotFoundException("Comment not found"));
+    res.status(200).json({
+        success: true,
+        data: comment,
+    });
+};
+
+const updateCommentByID = async (req, res, next) => {
+    const cid = req.params.cid;
+    if (!cid) {
+        return next(new IllegalArgumentException("Invalid/Missing Comment Id"));
+    }
+    try {
+        const comment = await PostComment.findById(cid);
+        // TODO check owner
+        if (!comment) throw new ResourceNotFoundException("Comment not found");
+        const newComment = await PostComment.findByIdAndUpdate(
+            cid,
+            { $set: req.body },
+            { new: true }
+        );
+        res.json({ success: true, data: newComment });
+    } catch (err) {
+        next(err);
+    }
+};
+const deleteCommentById = async (req, res, next) => {
+    const cid = req.params.cid;
+    if (!cid) {
+        return next(new IllegalArgumentException("Invalid/Missing Comment Id"));
+    }
+
+    try {
+        // TODO check owner
+        const result = await PostComment.findByIdAndDelete(cid);
+        if (!result) throw new ResourceNotFoundException("Comment not found");
+        res.json({ success: true, data: result });
+    } catch (err) {
+        next(err);
+    }
+};
+
 const getComments = async (req, res, next) => {
     if (!req.params.pid) {
         return next(new IllegalArgumentException("Invalid/Missing Post Id"));
@@ -349,13 +401,13 @@ const updatePostById = async (req, res, next) => {
     const pid = req.params.id;
     const mediaFiles = req.files;
     const isMarkdown = req.body.isMarkdown;
-
     if (!pid) {
         return next(new IllegalArgumentException("Invalid/Missing Post Id"));
     }
 
     try {
         const post = await Post.findById(pid);
+        // TODO Check owner
         const hasMedia = mediaFiles?.length > 0;
         if (!post) throw new ResourceNotFoundException("Post not found");
         const type = post.type;
@@ -396,7 +448,21 @@ const updatePostById = async (req, res, next) => {
     }
 };
 
-const deletePostById = (req, res, next) => {};
+const deletePostById = async (req, res, next) => {
+    const pid = req.params.id;
+    if (!pid) {
+        return next(new IllegalArgumentException("Invalid/Missing Post Id"));
+    }
+
+    try {
+        // TODO Check owner
+        const result = await Post.findByIdAndDelete(pid);
+        if (!result) throw new ResourceNotFoundException("Post not found");
+        res.json({ success: true, data: result });
+    } catch (err) {
+        next(err);
+    }
+};
 const deleteAllPost = async (req, res, next) => {
     const dp = await Promise.all([
         PostLike.find(),
@@ -424,5 +490,7 @@ module.exports = {
     addComment,
     likeUnlikeComment,
     getPostCommentLiker,
-    updatePostById,
+    updateCommentByID,
+    deleteCommentById,
+    getCommentByID,
 };
