@@ -7,7 +7,7 @@ const upload = require("../middleware/upload");
 
 router
     .route("/")
-    .get(controller.getAllPost)
+    .get(controller.getAllPublicPost)
     .post(auth.verifyUser, upload.array("mediaFiles"), controller.createPost)
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllPost);

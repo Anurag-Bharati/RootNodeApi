@@ -21,13 +21,13 @@ const commentsPerPage = 5;
 const likerPerPage = 10;
 /* constraints end*/
 
-const getAllPost = async (req, res, next) => {
+const getAllPublicPost = async (req, res, next) => {
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
         const [publicFeed, totalPages] = await Promise.all([
             // execute query with page and limit values
-            Post.find()
+            Post.find({ visibility: "public" })
                 .sort("-createdAt")
                 .limit(postPerPage)
                 .skip((page - 1) * postPerPage)
@@ -37,7 +37,7 @@ const getAllPost = async (req, res, next) => {
         ]);
         res.json({
             success: true,
-            posts: publicFeed,
+            data: publicFeed,
             totalPages: Math.ceil(totalPages / postPerPage),
             currentPage: Number(page),
         });
@@ -54,9 +54,9 @@ const getPostById = async (req, res, next) => {
             throw new IllegalArgumentException("Invalid post id");
         const post = await Post.findById(pid);
         if (!post) throw new ResourceNotFoundException("Post not found");
-        res.status(200).json({
+        res.json({
             success: true,
-            post: post,
+            data: post,
         });
     } catch (err) {
         next(err);
@@ -102,9 +102,8 @@ const createPost = async (req, res, next) => {
 
         let type;
         if (isMarkdown === "true") type = "markdown";
-        else if (mediaFiles && mediaFiles.length > 0 && caption) type = "mixed";
-        else if (mediaFiles && mediaFiles.length > 0 && !caption)
-            type = "media";
+        else if (hasMedia && caption) type = "mixed";
+        else if (hasMedia && !caption) type = "media";
         else type = "text";
 
         // Independent Operations: Post Creation and Find User
@@ -135,7 +134,7 @@ const createPost = async (req, res, next) => {
         res.status(201).json({
             success: true,
             message: "Post created successfully!",
-            post: post,
+            data: post,
         });
     } catch (err) {
         next(err);
@@ -162,10 +161,10 @@ const likeUnlikePost = async (req, res, next) => {
                 post.save(),
             ]);
 
-            res.status(200).json({
+            res.json({
                 success: true,
                 reply: "Post unliked successfully!",
-                liked: false,
+                data: { liked: false },
             });
         } else {
             post.likesCount++;
@@ -173,10 +172,10 @@ const likeUnlikePost = async (req, res, next) => {
                 PostLike.create({ post: post._id, user: req.user._id }),
                 post.save(),
             ]);
-            res.status(200).json({
+            res.json({
                 success: true,
-                reply: "Post liked successfully!",
-                liked: true,
+                message: "Post liked successfully!",
+                data: { liked: true },
             });
         }
     } catch (err) {
@@ -206,9 +205,9 @@ const getPostLiker = async (req, res, next) => {
         const countPromise = PostLike.find({ post: pid }).countDocuments();
         const [likers, count] = await Promise.all([likerPromise, countPromise]);
 
-        res.status(200).json({
+        res.json({
             success: true,
-            liker: likers,
+            data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
         });
@@ -240,9 +239,9 @@ const getPostCommentLiker = async (req, res, next) => {
 
         const [likers, count] = await Promise.all([likerPromise, countPromise]);
 
-        res.status(200).json({
+        res.json({
             success: true,
-            liker: likers,
+            data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
         });
@@ -275,10 +274,10 @@ const addComment = async (req, res, next) => {
             post.save(),
         ]);
 
-        res.status(200).json({
+        res.json({
             success: true,
-            reply: "Comment posted!",
-            comment: newComment,
+            message: "Comment posted!",
+            data: newComment,
         });
     } catch (err) {
         next(err);
@@ -357,7 +356,7 @@ const getComments = async (req, res, next) => {
         ]);
         res.json({
             success: true,
-            comments: comments,
+            data: comments,
             totalPages: Math.ceil(count / commentsPerPage),
             currentPage: Number(page),
         });
@@ -392,8 +391,8 @@ const likeUnlikeComment = async (req, res, next) => {
             ]);
             res.status(200).json({
                 success: true,
-                reply: "Comment unliked successfully!",
-                liked: false,
+                message: "Comment unliked successfully!",
+                data: { liked: false },
             });
         } else {
             comment.likesCount++;
@@ -404,10 +403,10 @@ const likeUnlikeComment = async (req, res, next) => {
                 }),
                 comment.save(),
             ]);
-            res.status(200).json({
+            res.json({
                 success: true,
-                reply: "Comment liked successfully!",
-                liked: true,
+                message: "Comment liked successfully!",
+                data: { liked: true },
             });
         }
     } catch (err) {
@@ -491,11 +490,11 @@ const deleteAllPost = async (req, res, next) => {
     clikes.forEach(async (cl) => cl.remove());
     cmts.forEach(async (c) => c.remove());
     posts.forEach(async (p) => p.remove());
-    res.json({ success: true, reply: "All post cleared!" });
+    res.json({ success: true, message: "All post cleared!" });
 };
 
 module.exports = {
-    getAllPost,
+    getAllPublicPost,
     getPostById,
     createPost,
     updatePostById,

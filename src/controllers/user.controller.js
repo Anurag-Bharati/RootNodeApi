@@ -41,8 +41,8 @@ const login = async (req, res, next) => {
         if (user.status !== "active") {
             return res.status(401).json({
                 success: false,
-                accountStatus: user.status,
-                reply: "Account not active",
+                message: "Account not active",
+                data: { accountStatus: user.status },
             });
         }
 
@@ -61,12 +61,14 @@ const login = async (req, res, next) => {
             " UserLoggedIn ".bgCyan.bold,
             `${user._id} at ${now.toLocaleString()}`.cyan
         );
-        res.status(200).json({
+        res.json({
             success: true,
-            reply: "User logged in succesfully",
-            accountStatus: user.status,
-            token: authToken.token,
-            expiresAt: authToken.expiresAt,
+            message: "User logged in succesfully",
+            data: {
+                accountStatus: user.status,
+                token: authToken.token,
+                expiresAt: authToken.expiresAt,
+            },
         });
     } catch (err) {
         next(err);
@@ -107,9 +109,8 @@ const register = async (req, res, next) => {
 
         res.status(201).json({
             success: true,
-            reply: "User registered successfully!",
-            username: newUser.username,
-            userId: newUser._id,
+            message: "User registered successfully!",
+            data: { userId: newUser._id, username: newUser.username },
         });
     } catch (err) {
         next(err);
