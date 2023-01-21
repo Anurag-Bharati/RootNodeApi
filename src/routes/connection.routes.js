@@ -7,16 +7,11 @@ const auth = require("../middleware/auth");
 router
     .route("/")
     .get(auth.verifyUser, controller.getAllConnections)
-    .get(utils.notImplemented)
-    .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+    .all(utils.notImplemented);
 
 router
-    .use(auth.verifyUser)
     .route("/:id")
-    .get(utils.notImplemented)
     .post(auth.verifyUser, controller.userConnectionToggler)
-    .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+    .all(utils.notImplemented);
 
 module.exports = router;

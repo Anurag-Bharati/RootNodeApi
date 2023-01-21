@@ -4,31 +4,21 @@ const controller = require("../controllers/user.controller");
 const utils = require("../utils/utils");
 const auth = require("../middleware/auth");
 
-router
-    .route("/register")
-    .get(utils.notImplemented)
-    .post(controller.register)
-    .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+router.route("/register").post(controller.register).all(utils.notImplemented);
 
 router
     .route("/whoami")
     .get(auth.checkUserOrAnonymous, controller.whoAmI)
-    .post(utils.notImplemented)
-    .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+    .all(utils.notImplemented);
 
-router
-    .route("/login")
-    .get(utils.notImplemented)
-    .post(controller.login)
-    .put(utils.notImplemented)
-    .delete(utils.notImplemented);
+router.route("/login").post(controller.login).all(utils.notImplemented);
+
+router.route("/").get(controller.getAllUsers).all(utils.notImplemented);
 
 router
     .route("/:id")
     .get(controller.getUserByID)
     .put(controller.updateUserByID)
-    .post(utils.notImplemented);
+    .all(utils.notImplemented);
 
 module.exports = router;
