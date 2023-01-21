@@ -16,7 +16,7 @@ router
     .use(auth.verifyUser)
     .route("/:id")
     .get(controller.getStoryById)
-    .post(utils.notImplemented)
+    .post(controller.addStoryWatcher)
     .put(upload.single("media"), controller.updateStoryById)
     .delete(controller.deleteStoryById);
 
@@ -25,5 +25,10 @@ router
     .route("/:id/likeunlike")
     .get(controller.getStoryLiker)
     .post(controller.likeUnlikeStory);
+
+router
+    .use(auth.verifyUser)
+    .route("/:id/seenBy")
+    .get(controller.getStoryWatcher); // USING ARRAY
 
 module.exports = router;

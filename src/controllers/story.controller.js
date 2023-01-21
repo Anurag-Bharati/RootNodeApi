@@ -154,10 +154,136 @@ const deleteStoryById = async (req, res, next) => {
     }
 };
 
-const getStoryLiker = (req, res, next) => {};
-const likeUnlikeStory = (req, res, next) => {};
+const getStoryLiker = async (req, res, next) => {
+    const id = req.params.id;
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+    try {
+        if (!id) throw new IllegalArgumentException("Missing story id");
+        if (!isValidObjectId(id))
+            throw new IllegalArgumentException("Invalid story id");
 
-const getStoryWatcher = (req, res, next) => {};
+        const story = await Story.exists({ _id: id });
+        if (!story) throw new ResourceNotFoundException("Story not found");
+
+        const likerPromise = StoryLike.find({ story: id })
+            .select("user createdAt")
+            .populate("user", ["username", "showOnlineStatus", "avatar"])
+            .sort("-createdAt")
+            .limit(likerPerPage)
+            .skip((page - 1) * likerPerPage)
+            .exec();
+
+        const countPromise = StoryLike.find({ story: id }).countDocuments();
+        const [likers, count] = await Promise.all([likerPromise, countPromise]);
+
+        res.json({
+            success: true,
+            data: likers,
+            totalPages: Math.ceil(count / likerPerPage),
+            currentPage: Number(page),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+const likeUnlikeStory = async (req, res, next) => {
+    const id = req.params.id;
+    const uid = req.user._id;
+    try {
+        if (!id) throw new IllegalArgumentException("Missing story id");
+        const story = await Story.findById(id).select(["_id", "likesCount"]);
+        if (!story) throw new ResourceNotFoundException("Story not found");
+        const isLiked = await StoryLike.findOne({ story: id, user: uid });
+        if (isLiked) {
+            story.likesCount--;
+            // concurrency
+            await Promise.all([isLiked.remove(), story.save()]);
+
+            res.json({
+                success: true,
+                reply: "Story unliked successfully!",
+                data: { liked: false },
+            });
+        } else {
+            story.likesCount++;
+            await Promise.all([
+                StoryLike.create({ story: story._id, user: uid }),
+                story.save(),
+            ]);
+            res.json({
+                success: true,
+                message: "Story liked successfully!",
+                data: { liked: true },
+            });
+        }
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getStoryWatcher = async (req, res, next) => {
+    const id = req.params.id;
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+    try {
+        if (!id) throw new IllegalArgumentException("Missing story id");
+        if (!isValidObjectId(id))
+            throw new IllegalArgumentException("Invalid story id");
+
+        const story = await Story.findById({ _id: id }).populate("seenBy", [
+            "username",
+            "showOnlineStatus",
+            "avatar",
+            "createdAt",
+        ]);
+
+        if (!story) throw new ResourceNotFoundException("Story not found");
+
+        const seenBy = story.seenBy.slice(
+            (page - 1) * watcherPerPage,
+            page * watcherPerPage
+        );
+
+        const count = story.seenBy.length;
+
+        res.json({
+            success: true,
+            data: seenBy,
+            totalPages: Math.ceil(count / watcherPerPage),
+            currentPage: Number(page),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const addStoryWatcher = async (req, res, next) => {
+    const id = req.params.id;
+    const uid = req.user._id;
+    try {
+        if (!id) throw new IllegalArgumentException("Missing story id");
+        if (!isValidObjectId(id))
+            throw new IllegalArgumentException("Invalid story id");
+
+        const story = await Story.findById({ _id: id });
+        if (!story) throw new ResourceNotFoundException("Story not found");
+
+        if (!story.seenBy.includes(uid)) {
+            story.seenBy.push(uid);
+        }
+
+        story.watchCount++;
+        await story.save();
+        console.log(story.seenBy);
+        res.json({
+            success: true,
+            message: "Story watched!",
+        });
+    } catch (err) {
+        next(err);
+    }
+};
 
 module.exports = {
     getAllPublicStories,
@@ -169,4 +295,5 @@ module.exports = {
     getStoryLiker,
     likeUnlikeStory,
     getStoryWatcher,
+    addStoryWatcher,
 };

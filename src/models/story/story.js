@@ -28,7 +28,7 @@ const storySchema = new Schema(
             },
         },
 
-        likeCount: {
+        likesCount: {
             type: Number,
             default: 0,
         },
