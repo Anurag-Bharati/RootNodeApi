@@ -1,5 +1,6 @@
-const { User, Profile, AuthToken } = require("../models/models.wrapper");
 require("colors");
+const { User, Profile, AuthToken } = require("../models/models.wrapper");
+
 const {
     EntityNotFoundException,
     EntityConflictException,
@@ -24,103 +25,95 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 const login = async (req, res, next) => {
-    let now = new Date();
-    let nowInSec = Math.ceil(now.getTime() * 0.001);
-
+    const now = new Date();
+    const nowInSec = Math.ceil(now.getTime() * 0.001);
     const { username, password } = req.body;
-    if (!username || !password) {
-        const e = new IllegalArgumentException("Missing required fields");
-        return next(e);
-    }
-    const user = await User.findOne({ username: username });
+    try {
+        if (!username || !password)
+            throw new IllegalArgumentException("Missing required fields");
 
-    if (!user) {
-        return next(
-            new EntityNotFoundException(
-                `User with ${username} name does not exists`
-            )
+        const user = await User.findOne({ username: username });
+        if (!user) throw new EntityNotFoundException(`${username} not exists`);
+
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) throw new FieldNotMatchedException("Incorrect password");
+
+        if (user.status !== "active") {
+            return res.status(401).json({
+                success: false,
+                accountStatus: user.status,
+                reply: "Account not active",
+            });
+        }
+
+        let authToken = await AuthToken.findOne({ user: user._id });
+
+        if (!authToken) {
+            authToken = await user.generateToken();
+        }
+
+        if (nowInSec > authToken.expiresAt) {
+            await authToken.remove();
+            authToken = await user.generateToken();
+        }
+        console.log(
+            "↪".bold,
+            " UserLoggedIn ".bgCyan.bold,
+            `${user._id} at ${now.toLocaleString()}`.cyan
         );
-    }
-
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-        const e = new FieldNotMatchedException("Incorrect password");
-        return next(e);
-    }
-
-    if (user.status !== "active") {
-        return res.status(401).json({
-            success: false,
+        res.status(200).json({
+            success: true,
+            reply: "User logged in succesfully",
             accountStatus: user.status,
-            reply: "Account not active",
+            token: authToken.token,
+            expiresAt: authToken.expiresAt,
         });
+    } catch (err) {
+        next(err);
     }
-
-    let authToken = await AuthToken.findOne({ user: user._id });
-
-    if (!authToken) {
-        authToken = await user.generateToken();
-    }
-
-    if (nowInSec > authToken.expiresAt) {
-        await authToken.remove();
-        authToken = await user.generateToken();
-    }
-    console.log(
-        "↪".bold,
-        " UserLoggedIn ".bgCyan.bold,
-        `${user._id} at ${now.toLocaleString()}`.cyan
-    );
-    res.status(200).json({
-        success: true,
-        reply: "User logged in succesfully",
-        accountStatus: user.status,
-        token: authToken.token,
-        expiresAt: authToken.expiresAt,
-    });
 };
 const register = async (req, res, next) => {
-    let now = new Date();
+    const now = new Date();
     const { username, email, password, fname, lname } = req.body;
+    const missing = !username || !email || !password || !fname || !lname;
+    try {
+        if (missing)
+            throw new IllegalArgumentException("Missing required fields");
 
-    if (!username || !email || !password || !fname || !lname) {
-        const e = new IllegalArgumentException("Missing required fields");
-        return next(e);
-    }
+        const user = await User.findOne({ username: username });
 
-    const user = await User.findOne({ username: username });
-
-    if (user)
-        return next(
-            new EntityConflictException(
+        if (user)
+            throw new EntityConflictException(
                 `User with username ${username} already exists`
-            )
+            );
+
+        const newUser = User({ username, email, password });
+        newUser.password = await newUser.encryptPassword(password);
+
+        const profile = new Profile();
+        profile.user = newUser._id;
+        profile.fname = fname;
+        profile.lname = lname;
+
+        await newUser.save();
+        await profile.save();
+
+        console.log(
+            "↪".bold,
+            " UserCreated ".bgCyan.bold,
+            `User registered with id: ${newUser._id} at ${now.toLocaleString()}`
+                .cyan
         );
 
-    const newUser = await User({ username, email, password });
-    newUser.password = await newUser.encryptPassword(password);
-
-    const profile = new Profile();
-    profile.user = newUser._id;
-    profile.fname = fname;
-    profile.lname = lname;
-
-    await newUser.save();
-    await profile.save();
-
-    console.log(
-        "↪".bold,
-        " UserCreated ".bgCyan.bold,
-        `User registered with id: ${newUser._id} at ${now.toLocaleString()}`
-            .cyan
-    );
-
-    res.status(201).json({
-        success: true,
-        reply: "User registered successfully!",
-        username: newUser.username,
-        userId: newUser._id,
-    });
+        res.status(201).json({
+            success: true,
+            reply: "User registered successfully!",
+            username: newUser.username,
+            userId: newUser._id,
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
 module.exports = {

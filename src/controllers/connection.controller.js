@@ -10,24 +10,23 @@ const getAllConnections = async (req, res, next) => {
     page = page > 0 ? page : 1;
     const rootnode = req.user;
     try {
-        const x = await Promise.all([
-            Connection.find({
-                rootnode: rootnode._id,
-                status: "accepted",
-            })
-                .sort("-createdAt")
-                .limit(connPerPage)
-                .skip((page - 1) * connPerPage)
-                .exec(),
-            Connection.countDocuments({
-                rootnode: rootnode._id,
-                status: "accepted",
-            }),
-        ]);
+        const connsPromise = Connection.find({
+            rootnode: rootnode._id,
+            status: "accepted",
+        })
+            .sort("-createdAt")
+            .limit(connPerPage)
+            .skip((page - 1) * connPerPage)
+            .exec();
+        const countPromise = Connection.countDocuments({
+            rootnode: rootnode._id,
+            status: "accepted",
+        });
+        const [conns, count] = await Promise.all([connsPromise, countPromise]);
         res.json({
             success: true,
-            connections: x[0],
-            totalPages: Math.ceil(x[1] / connPerPage),
+            connections: conns,
+            totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
         });
     } catch (err) {
@@ -40,11 +39,15 @@ const userConnectionToggler = async (req, res, next) => {
     const rootnode = req.user;
     try {
         if (!id) throw new IllegalArgumentException("Missing user id");
+        const validId = isValidObjectId(id);
+        if (!validId) throw new IllegalArgumentException("Invalid user id");
+
         const nodeToConn = await User.findById(id);
         const isConnected = await Connection.findOne({
             rootnode: rootnode._id,
             node: nodeToConn,
         });
+
         if (isConnected) {
             await isConnected.remove();
             return res.json({
