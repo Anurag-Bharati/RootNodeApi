@@ -106,7 +106,6 @@ const createPost = async (req, res, next) => {
         else if (hasMedia && caption) type = "mixed";
         else if (hasMedia && !caption) type = "media";
         else type = "text";
-        console.log(type);
         // Independent Operations: Post Creation and Find User
         const postPromise = Post.create({
             type: type,

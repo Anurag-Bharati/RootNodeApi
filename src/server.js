@@ -20,6 +20,7 @@ const startApp = (params) => {
     app.use(`${ROOT}/user`, routes.user);
     app.use(`${ROOT}/post`, routes.post);
     app.use(`${ROOT}/conn`, routes.conn);
+    app.use(`${ROOT}/story`, routes.story);
     /* fallback routes  */
     app.get("*", utils.notFound);
     app.all("*", utils.notImplemented);

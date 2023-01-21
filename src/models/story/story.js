@@ -21,13 +21,10 @@ const storySchema = new Schema(
         },
 
         media: {
+            url: String,
             type: {
-                url: String,
-                type: {
-                    type: String,
-                    enum: ["image", "video"],
-                    default: "image",
-                },
+                type: String,
+                enum: ["image", "video"],
             },
         },
 

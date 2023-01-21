@@ -42,6 +42,11 @@ const userSchema = new Schema(
             default: 0,
         },
 
+        storiesCount: {
+            type: Number,
+            default: 0,
+        },
+
         connectionCount: {
             type: Number,
             default: 0,
