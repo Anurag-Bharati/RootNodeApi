@@ -75,6 +75,7 @@ const createPost = async (req, res, next) => {
     const mediaFiles = req.files;
     const hasMedia = mediaFiles?.length > 0;
     const medias = [];
+    const uid = req.user._id;
 
     try {
         if (!caption && !hasMedia)
@@ -101,15 +102,15 @@ const createPost = async (req, res, next) => {
         }
 
         let type;
-        if (isMarkdown === "true") type = "markdown";
+        if (isMarkdown === true) type = "markdown";
         else if (hasMedia && caption) type = "mixed";
         else if (hasMedia && !caption) type = "media";
         else type = "text";
-
+        console.log(type);
         // Independent Operations: Post Creation and Find User
         const postPromise = Post.create({
             type: type,
-            owner: req.user._id,
+            owner: uid,
             caption: caption,
             mediaFiles: medias,
             visibility: visibility,
@@ -119,9 +120,7 @@ const createPost = async (req, res, next) => {
             shareable: shareable,
         });
 
-        const userPromise = User.findById(req.user._id).select(
-            "_id postsCount"
-        );
+        const userPromise = User.findById(uid).select("_id postsCount");
 
         // concurrency
         const [post, user] = await Promise.all([postPromise, userPromise]);
@@ -143,12 +142,12 @@ const createPost = async (req, res, next) => {
 
 const likeUnlikePost = async (req, res, next) => {
     const pid = req.params.pid;
-    const user = req.user._id;
+    const uid = req.user._id;
     try {
         if (!pid) throw new IllegalArgumentException("Invalid/Missing Post Id");
         const post = await Post.findById(pid).select(["_id", "likesCount"]);
         if (!post) throw new ResourceNotFoundException("Post not found");
-        const isLiked = await PostLike.findOne({ post: pid, user: user });
+        const isLiked = await PostLike.findOne({ post: pid, user: uid });
         if (isLiked) {
             post.likesCount--;
 
@@ -156,7 +155,7 @@ const likeUnlikePost = async (req, res, next) => {
             await Promise.all([
                 PostLike.findOneAndDelete({
                     post: post._id,
-                    user: req.user._id,
+                    user: uid,
                 }),
                 post.save(),
             ]);
@@ -169,7 +168,7 @@ const likeUnlikePost = async (req, res, next) => {
         } else {
             post.likesCount++;
             await Promise.all([
-                PostLike.create({ post: post._id, user: req.user._id }),
+                PostLike.create({ post: post._id, user: uid }),
                 post.save(),
             ]);
             res.json({
@@ -184,15 +183,15 @@ const likeUnlikePost = async (req, res, next) => {
 };
 
 const getPostLiker = async (req, res, next) => {
+    const pid = req.params.pid;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
-    const pid = req.params.pid;
     try {
         if (!pid) throw new IllegalArgumentException("Invalid/Missing Post Id");
         if (!isValidObjectId(pid))
             throw new IllegalArgumentException("Invalid Post Id");
         // check if post exists
-        const post = await Post.exists({ _id: req.params.pid });
+        const post = await Post.exists({ _id: pid });
         if (!post) throw new ResourceNotFoundException("Post not found");
 
         const likerPromise = PostLike.find({ post: pid })
@@ -216,10 +215,10 @@ const getPostLiker = async (req, res, next) => {
     }
 };
 const getPostCommentLiker = async (req, res, next) => {
+    const cid = req.params.cid;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
-        const cid = req.params.cid;
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         if (!isValidObjectId(cid))
             throw new IllegalArgumentException("Invalid Comment Id");
@@ -269,7 +268,7 @@ const addComment = async (req, res, next) => {
             PostComment.create({
                 post: post._id,
                 user: req.user._id,
-                comment: req.body.comment,
+                comment: cmt,
             }),
             post.save(),
         ]);
@@ -367,6 +366,7 @@ const getComments = async (req, res, next) => {
 
 const likeUnlikeComment = async (req, res, next) => {
     const cid = req.params.cid;
+    const uid = req.user._id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         const validId = isValidObjectId(cid);
@@ -378,14 +378,14 @@ const likeUnlikeComment = async (req, res, next) => {
         if (!comment) throw new ResourceNotFoundException("Comment not found");
         const isLiked = await PostCommentLike.findOne({
             comment: comment._id,
-            user: req.user._id,
+            user: uid,
         });
         if (isLiked) {
             comment.likesCount--;
             await Promise.all([
                 PostCommentLike.findOneAndDelete({
                     comment: comment._id,
-                    user: req.user._id,
+                    user: uid,
                 }),
                 comment.save(),
             ]);
@@ -399,7 +399,7 @@ const likeUnlikeComment = async (req, res, next) => {
             await Promise.all([
                 PostCommentLike.create({
                     comment: comment._id,
-                    user: req.user._id,
+                    user: uid,
                 }),
                 comment.save(),
             ]);

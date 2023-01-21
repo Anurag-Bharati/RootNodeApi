@@ -1,4 +1,5 @@
 require("colors");
+const { isValidObjectId } = require("mongoose");
 const { User, Profile, AuthToken } = require("../models/models.wrapper");
 
 const {
@@ -8,15 +9,24 @@ const {
     IllegalArgumentException,
 } = require("../throwable/exception.rootnode");
 
+const getAllUsers = (req, res, next) => {
+    User.find()
+        .then((users) => res.json(users))
+        .catch(next);
+};
+
 const getUserByID = (req, res, next) => {
-    User.findById(req.params.id)
+    const uid = req.params.id;
+    const isValid = isValidObjectId(uid);
+    if (!isValid) return next(new IllegalArgumentException("Invalid user id"));
+    User.findById(uid)
         .then((user) => res.json(user))
         .catch(next);
 };
 
 const whoAmI = (req, res, next) => {
     const user = req.user || { username: "Anonymous-User" };
-    const isAnonymous = req.user == null;
+    const isAnonymous = req.user === null;
     res.status(200).json({ user: user, isAnonymous: isAnonymous });
 };
 const updateUserByID = (req, res, next) => {
@@ -121,6 +131,7 @@ module.exports = {
     whoAmI,
     login,
     register,
+    getAllUsers,
     getUserByID,
     updateUserByID,
 };

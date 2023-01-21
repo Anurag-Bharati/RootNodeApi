@@ -1,3 +1,4 @@
+const { isValidObjectId } = require("mongoose");
 const { Connection, User } = require("../models/models.wrapper");
 const { IllegalArgumentException } = require("../throwable/exception.rootnode");
 
@@ -25,7 +26,7 @@ const getAllConnections = async (req, res, next) => {
         const [conns, count] = await Promise.all([connsPromise, countPromise]);
         res.json({
             success: true,
-            connections: conns,
+            data: conns,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
         });
@@ -42,30 +43,43 @@ const userConnectionToggler = async (req, res, next) => {
         const validId = isValidObjectId(id);
         if (!validId) throw new IllegalArgumentException("Invalid user id");
 
-        const nodeToConn = await User.findById(id);
+        const [user, nodeToConn] = await Promise.all([
+            User.findById(rootnode._id),
+            User.findById(id),
+        ]);
+
         const isConnected = await Connection.findOne({
             rootnode: rootnode._id,
             node: nodeToConn,
         });
 
         if (isConnected) {
-            await isConnected.remove();
+            if (user.connectionCount > 0) user.connectionCount--;
+            await Promise.all([user.save(), isConnected.remove()]);
             return res.json({
                 success: true,
-                hasLink: false,
-                reply: "Node unlinked successfully",
+                message: "Node unlinked successfully",
+                data: { hasLink: false },
             });
         }
-        const newConn = await Connection.create({
+        user.connectionCount++;
+        const newConnPromise = Connection.create({
             rootnode: rootnode._id,
             node: nodeToConn,
         });
+        const [newConn, updatedRoot] = await Promise.all([
+            newConnPromise,
+            user.save(),
+        ]);
         res.json({
             success: true,
-            hasLink: true,
-            linkStatus: newConn.status,
-            reply: "Nodes linked successfully",
-            data: newConn,
+            message: "Nodes linked successfully",
+            data: {
+                newNode: newConn,
+                hasLink: true,
+                linkStatus: newConn.status,
+                connCount: updatedRoot.connectionCount,
+            },
         });
     } catch (err) {
         next(err);
