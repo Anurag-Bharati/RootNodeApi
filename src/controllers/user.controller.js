@@ -30,6 +30,7 @@ const updateUserByID = (req, res, next) => {
 
 module.exports = {
     whoAmI,
+    getAllUsers,
     getUserByID,
     updateUserByID,
 };
