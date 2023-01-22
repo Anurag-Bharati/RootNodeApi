@@ -1,6 +1,8 @@
 const colors = require("colors/safe");
 const dotenv = require("dotenv");
 const runApp = require("./app.js");
+const RootNodeSocket = require("./services/socket/socket");
+const http = require("http");
 const utils = require("./utils/utils.js");
 const { serveRandom } = require("./utils/foods");
 const routes = require("./routes/routes.wrapper");
@@ -17,6 +19,8 @@ const ROOT = process.env.API_URL || "/api/v0";
 
 const startApp = (params) => {
     const app = runApp(params);
+    const server = http.createServer(app);
+    RootNodeSocket.runSocket(server);
     /* routing start */
     app.use(`${ROOT}/auth`, routes.auth);
     app.use(`${ROOT}/user`, routes.user);
@@ -28,7 +32,7 @@ const startApp = (params) => {
     app.all("*", utils.notImplemented);
     /* routing end */
     app.use(errorMiddleware);
-    app.listen(PORT, () => initialLogs());
+    server.listen(PORT, initialLogs);
 };
 
 const initialLogs = () => {

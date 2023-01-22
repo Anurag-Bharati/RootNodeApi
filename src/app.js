@@ -4,6 +4,7 @@ const path = require("path");
 const pipeline = require("./middleware/pipeline");
 const logger = require("./utils/logger");
 const staticPath = path.join(__dirname, "/../", "/public/");
+
 const runApp = (params) => {
     const app = express();
     app.set("trust proxy", true);
