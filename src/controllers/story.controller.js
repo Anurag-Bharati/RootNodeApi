@@ -18,6 +18,7 @@ const getAllPublicStories = async (req, res, next) => {
     try {
         const [publicStories, totalPages] = await Promise.all([
             Story.find({ visibility: "public" })
+                .populate("owner", ["username", "showOnlineStatus", "avatar"])
                 .sort("-createdAt")
                 .limit(storyPerPage)
                 .skip((page - 1) * storyPerPage)
@@ -37,7 +38,7 @@ const getAllPublicStories = async (req, res, next) => {
 const createStory = async (req, res, next) => {
     const { heading, visibility, likeable } = req.body;
     const media = req.file;
-    const hasMedia = media !== null;
+    const hasMedia = media !== null && media !== undefined;
     const uid = req.user._id;
     let cleanedMedia = null;
     try {
@@ -269,13 +270,15 @@ const addStoryWatcher = async (req, res, next) => {
         const story = await Story.findById({ _id: id });
         if (!story) throw new ResourceNotFoundException("Story not found");
 
-        if (!story.seenBy.includes(uid)) {
-            story.seenBy.push(uid);
-        }
+        if (story.seenBy.includes(uid))
+            return res.json({
+                success: true,
+                message: "Story already watched!",
+            });
 
+        story.seenBy.push(uid);
         story.watchCount++;
         await story.save();
-        console.log(story.seenBy);
         res.json({
             success: true,
             message: "Story watched!",
