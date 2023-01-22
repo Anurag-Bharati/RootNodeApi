@@ -106,7 +106,6 @@ const createPost = async (req, res, next) => {
         else if (hasMedia && caption) type = "mixed";
         else if (hasMedia && !caption) type = "media";
         else type = "text";
-        console.log(type);
         // Independent Operations: Post Creation and Find User
         const postPromise = Post.create({
             type: type,
@@ -214,6 +213,7 @@ const getPostLiker = async (req, res, next) => {
         next(err);
     }
 };
+
 const getPostCommentLiker = async (req, res, next) => {
     const cid = req.params.cid;
     let page = req.query.page || 1;
@@ -309,16 +309,17 @@ const updateCommentByID = async (req, res, next) => {
         const comment = await PostComment.findById(cid);
         // TODO check owner
         if (!comment) throw new ResourceNotFoundException("Comment not found");
-        const newComment = await PostComment.findByIdAndUpdate(
+        const updatedComment = await PostComment.findByIdAndUpdate(
             cid,
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: newComment });
+        res.json({ success: true, data: updatedComment });
     } catch (err) {
         next(err);
     }
 };
+
 const deleteCommentById = async (req, res, next) => {
     const cid = req.params.cid;
     try {
@@ -478,6 +479,7 @@ const deletePostById = async (req, res, next) => {
         next(err);
     }
 };
+
 const deleteAllPost = async (req, res, next) => {
     const [likes, clikes, cmts, posts] = await Promise.all([
         PostLike.find(),
