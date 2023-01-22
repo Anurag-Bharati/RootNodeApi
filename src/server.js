@@ -6,6 +6,7 @@ const { serveRandom } = require("./utils/foods");
 const routes = require("./routes/routes.wrapper");
 const connectDBAndLaunch = require("./config/db");
 const { errorMiddleware } = require("./middleware/pipeline");
+const initiateApp = require("./config/initiate.server");
 
 // Config
 colors.enable();
@@ -17,6 +18,7 @@ const ROOT = process.env.API_URL || "/api/v0";
 const startApp = (params) => {
     const app = runApp(params);
     /* routing start */
+    app.use(`${ROOT}/auth`, routes.auth);
     app.use(`${ROOT}/user`, routes.user);
     app.use(`${ROOT}/post`, routes.post);
     app.use(`${ROOT}/conn`, routes.conn);
@@ -41,30 +43,6 @@ const initialLogs = () => {
     );
     logger.log("[Info] App started on port:" + PORT);
 };
-function printProgress(progress) {
-    process.stdout.write(progress);
-}
-
-// hide cursor
-process.stdout.write("\u001B[?25l");
-process.stdout.write(
-    "\n" + " RootNode ".inverse.bold + " Launching Service. Please Wait".bold
-);
-
-let progress = 0;
-const switchAt = 30;
-const interval = setInterval(() => {
-    progress += 10;
-    printProgress(".".bold);
-    if (progress % switchAt == 0) {
-        process.stdout.moveCursor(-3);
-        process.stdout.write("   ");
-        process.stdout.moveCursor(-3);
-    }
-    if (progress >= 80) {
-        clearInterval(interval);
-    }
-}, 50);
 
 // Launch
-setTimeout(() => connectDBAndLaunch(startApp), 500);
+initiateApp().then((res) => connectDBAndLaunch(startApp, res));

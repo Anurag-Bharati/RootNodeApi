@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("colors");
 
-const AuthToken = require("./user.authtoken");
+const UserSession = require("./user.sessions");
 
 const userSchema = new Schema(
     {
@@ -83,15 +83,15 @@ const userSchema = new Schema(
     { timestamps: true }
 );
 
-userSchema.methods.generateToken = async function () {
+userSchema.methods.generateRefreshToken = async function () {
     const token = jwt.sign(
-        { id: this._id, username: this.username, role: this.role },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { _id: this._id, username: this.username, role: this.role },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN }
     );
 
     const decodedData = jwt.decode(token);
-    const authToken = await AuthToken.create({
+    const refreshToken = await UserSession.create({
         token: token,
         user: this._id,
         issuedAt: decodedData.iat,
@@ -100,11 +100,26 @@ userSchema.methods.generateToken = async function () {
 
     console.log(
         "↪".bold,
-        " TokenGenerated ".bgCyan.bold,
-        `New token has been assigned to ${this._id}`.cyan
+        " RefreshTokenGenerated ".bgCyan.bold,
+        `New refresh token has been assigned to ${this._id}`.cyan
     );
 
-    return authToken;
+    return refreshToken;
+};
+userSchema.methods.generateAccessToken = async function () {
+    const token = jwt.sign(
+        { _id: this._id, username: this.username, role: this.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
+    );
+
+    console.log(
+        "↪".bold,
+        " AccessTokenGenerated ".bgCyan.bold,
+        `New access token has been assigned to ${this._id}`.cyan
+    );
+
+    return token;
 };
 
 userSchema.methods.encryptPassword = async (password) => {

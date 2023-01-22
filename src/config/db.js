@@ -16,7 +16,19 @@ const generateBanner = (_) =>
 V ${_.V} - Running on ${_.ENV} environment \nUsing ${_.DS} Database - API: ${_.API_ROOT}
 `;
 
-const connectDBAndLaunch = async (launch) => {
+const generateError = (err) => {
+    console.log(
+        "\n" + ` ${err.error} `.bgRed.bold,
+        err.code.red,
+        err.message.bold,
+        err.trace ? "\n\n Trace route:\n" : "",
+        err.trace ?? "",
+        "\n"
+    );
+};
+
+const connectDBAndLaunch = async (launch, res) => {
+    if (res.err) return generateError(res.err);
     const conn = await mongoose.connect(
         process.env.USECLOUDDB === "1"
             ? process.env.CLOUDDB

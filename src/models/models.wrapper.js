@@ -3,7 +3,7 @@ const models = {};
 /* USER MODEL */
 models.User = require("./user/user");
 models.Profile = require("./user/user.profile");
-models.AuthToken = require("./user/user.authtoken");
+models.UserSession = require("./user/user.sessions");
 /* POST MODEL */
 models.Post = require("./post/post");
 models.PostLike = require("./post/post.like");

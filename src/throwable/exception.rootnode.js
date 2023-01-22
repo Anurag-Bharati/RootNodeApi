@@ -79,6 +79,14 @@ class UnsupportedFileFormatException extends Error {
         this.statusCode = statusCode;
     }
 }
+class SessionExpiredException extends Error {
+    constructor(message, statusCode = 403) {
+        super(message);
+        this.name = "SessionExpired";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
 /* exception end */
 
 const Exceptions = {
@@ -92,6 +100,7 @@ const Exceptions = {
     FileExceedsSizeLimitExecption,
     FilesExceedsFilesLimitExecption,
     UnsupportedFileFormatException,
+    SessionExpiredException,
 };
 
 module.exports = Exceptions;
