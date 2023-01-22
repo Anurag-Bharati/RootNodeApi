@@ -20,19 +20,20 @@ const ROOT = process.env.API_URL || "/api/v0";
 const startApp = (params) => {
     const app = runApp(params);
     const server = http.createServer(app);
-    RootNodeSocket.runSocket(server);
     /* routing start */
     app.use(`${ROOT}/auth`, routes.auth);
     app.use(`${ROOT}/user`, routes.user);
     app.use(`${ROOT}/post`, routes.post);
     app.use(`${ROOT}/conn`, routes.conn);
     app.use(`${ROOT}/story`, routes.story);
-    /* fallback routes  */
+    /* fallback routes */
     app.get("*", utils.notFound);
     app.all("*", utils.notImplemented);
     /* routing end */
     app.use(errorMiddleware);
     server.listen(PORT, initialLogs);
+    /* start socket.io server */
+    RootNodeSocket.runSocket(server);
 };
 
 const initialLogs = () => {

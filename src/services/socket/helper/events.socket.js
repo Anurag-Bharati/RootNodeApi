@@ -1,6 +1,11 @@
 const IOEvents = {};
-/* LIST EVENTS HERE  */
+/* events start  */
+
 IOEvents.CONNECT = "connect";
 IOEvents.DISCONNECT = "disconnect";
-/* LIST EVENTS END  */
+
+IOEvents.MSG = "msg";
+IOEvents.HELLO = "hello";
+
+/* events end  */
 module.exports = IOEvents;
