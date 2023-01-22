@@ -7,8 +7,8 @@ const upload = require("../middleware/upload");
 
 router
     .route("/")
-    .get(controller.getAllPost)
-    .post(upload.array("mediaFiles"), auth.verifyUser, controller.createPost)
+    .get(controller.getAllPublicPost)
+    .post(auth.verifyUser, upload.array("mediaFiles"), controller.createPost)
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllPost);
 
@@ -17,8 +17,8 @@ router
     .route("/:id")
     .get(controller.getPostById)
     .post(utils.notImplemented)
-    .put(controller.updatePostById) // TODO
-    .delete(controller.deletePostById); // TODO
+    .put(upload.array("mediaFiles"), controller.updatePostById)
+    .delete(controller.deletePostById);
 
 router
     .use(auth.verifyUser)
@@ -37,9 +37,9 @@ router
 router
     .use(auth.verifyUser)
     .route("/comment/:cid")
-    .get(utils.notImplemented) // TODO
-    .put(utils.notImplemented) // TODO
-    .delete(utils.notImplemented); // TODO
+    .get(controller.getCommentByID)
+    .put(controller.updateCommentByID)
+    .delete(controller.deleteCommentById);
 
 router
     .use(auth.verifyUser)

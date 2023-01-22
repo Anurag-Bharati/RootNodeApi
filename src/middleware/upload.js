@@ -1,5 +1,9 @@
+"use strict";
+
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs-extra");
+
 const {
     IllegalPostTypeExecption,
     UnsupportedFileFormatException,
@@ -12,11 +16,20 @@ const maxFileSize = 100 * 1024 * 1024;
 const maxImageSize = 10 * 1024 * 1024;
 const whiteListVideoTypes = [".mp4", ".mkv"];
 const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+const whiteListPath = ["post", "story"];
 const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);
 /* constraints end */
 
 const multerStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "./public/media/uploads/"),
+    destination: (req, file, cb) => {
+        const folder = req.query.folder;
+        let path = `./public/media/uploads/all`;
+        if (whiteListPath.includes(folder)) {
+            path = `./public/media/uploads/${folder}`;
+        }
+        fs.ensureDirSync(path);
+        return cb(null, path);
+    },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname).toLowerCase();
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e6);

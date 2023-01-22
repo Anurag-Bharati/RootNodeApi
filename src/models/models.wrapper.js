@@ -9,5 +9,10 @@ models.Post = require("./post/post");
 models.PostLike = require("./post/post.like");
 models.PostComment = require("./post/post.comment");
 models.PostCommentLike = require("./post/post.comment.like");
+/* CONN MODEL */
+models.Connection = require("./user/user.connection");
+/* STORY MODEL */
+models.Story = require("./story/story");
+models.StoryLike = require("./story/story.like");
 
 module.exports = models;
