@@ -37,6 +37,10 @@ const eventSchema = new Schema(
             type: Number,
             default: 0,
         },
+        attending: {
+            type: Number,
+            default: 0,
+        },
 
         limit: { type: Number },
         housefull: { type: Boolean, default: false },
