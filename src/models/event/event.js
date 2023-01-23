@@ -27,6 +27,7 @@ const eventSchema = new Schema(
         },
 
         location: { type: String, required: true },
+        coordinates: { lat: String, lon: String },
         date: { type: Date, required: true },
 
         cover: String,
