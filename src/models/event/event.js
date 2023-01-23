@@ -38,11 +38,18 @@ const eventSchema = new Schema(
             default: 0,
         },
 
-        limit: { type: Number, required: true },
-
+        limit: { type: Number },
+        housefull: { type: Boolean, default: false },
         status: {
             type: String,
-            enum: ["active", "canceled", "postpond", "inactive", "ongoing"],
+            enum: [
+                "active",
+                "canceled",
+                "postpond",
+                "inactive",
+                "ongoing",
+                "housefull",
+            ],
             default: "active",
         },
 

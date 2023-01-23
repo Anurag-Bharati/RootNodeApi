@@ -9,7 +9,8 @@ router
     .use(auth.verifyUser)
     .route("/")
     .get(controller.getAllPublicEvents)
-    .post(controller.addEvent);
+    .post(controller.addEvent)
+    .delete(controller.deleteAllEvents);
 
 router
     .use(auth.verifyUser)
