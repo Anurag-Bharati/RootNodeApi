@@ -5,7 +5,11 @@ const auth = require("../middleware/auth");
 const utils = require("../utils/utils");
 
 router.route("/whoami").get(auth.checkUserOrAnonymous, controller.whoAmI);
-router.route("/:id").get(controller.getUserByID).put(controller.updateUserByID);
+router
+    .route("/unique")
+    .get(controller.isUsernameUnique)
+    .all(utils.notImplemented);
 router.route("/").get(controller.getAllUsers).all(utils.notImplemented);
+router.route("/:id").get(controller.getUserByID).put(controller.updateUserByID);
 
 module.exports = router;

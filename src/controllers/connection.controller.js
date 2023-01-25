@@ -59,8 +59,8 @@ const userConnectionToggler = async (req, res, next) => {
         });
 
         if (isConnected) {
-            if (user.connectionCount > 0) user.connectionCount--;
-            if (nodeToConn.connectionCount > 0) nodeToConn.connectionCount--;
+            if (user.nodesCount > 0) user.nodesCount--;
+            if (nodeToConn.nodesCount > 0) nodeToConn.nodesCount--;
             await Promise.all([
                 user.save(),
                 isConnected.remove(),
@@ -87,7 +87,7 @@ const userConnectionToggler = async (req, res, next) => {
                 newNode: newConn,
                 hasLink: false,
                 linkStatus: newConn.status,
-                connCount: updatedRoot.connectionCount,
+                connCount: updatedRoot.nodesCount,
             },
         });
     } catch (err) {
@@ -150,8 +150,8 @@ const updateConnectionById = async (req, res, next) => {
     if (!connStatusEnum.includes(operation))
         throw new IllegalOperationException("Invalid operation parameter");
     if (operation === "accepted") {
-        user.connectionCount++;
-        nodeToConn.connectionCount++;
+        user.nodesCount++;
+        nodeToConn.nodesCount++;
         hasLink = true;
     }
     connection.status = operation;

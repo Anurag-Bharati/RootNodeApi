@@ -1,5 +1,7 @@
 require("colors");
+const { isValidObjectId } = require("mongoose");
 const { User } = require("../models/models.wrapper");
+const { IllegalArgumentException } = require("../throwable/exception.rootnode");
 
 const getAllUsers = (req, res, next) => {
     User.find()
@@ -28,9 +30,23 @@ const updateUserByID = (req, res, next) => {
         .catch(next);
 };
 
+const isUsernameUnique = async (req, res, next) => {
+    const un = req.query.username;
+    try {
+        if (!un) throw new IllegalArgumentException("Missing username field");
+        const exists = await User.exists({ username: un });
+        console.log(exists);
+        if (exists === null) return res.sendStatus(200);
+        return res.sendStatus(409);
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     whoAmI,
     getAllUsers,
     getUserByID,
     updateUserByID,
+    isUsernameUnique,
 };

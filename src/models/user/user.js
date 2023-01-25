@@ -17,10 +17,24 @@ const userSchema = new Schema(
             trim: true,
         },
 
+        fname: {
+            type: String,
+            minlength: [3, "First name must be at least 3 characters."],
+            required: [true, "Please enter a first name."],
+            trim: true,
+        },
+
+        lname: {
+            type: String,
+            required: [true, "Please enter a last name."],
+            trim: true,
+        },
+
         email: {
             type: String,
             required: [true, "Email is required."],
             trim: true,
+            unique: true,
         },
 
         emailVerified: {
@@ -47,7 +61,7 @@ const userSchema = new Schema(
             default: 0,
         },
 
-        connectionCount: {
+        nodesCount: {
             type: Number,
             default: 0,
         },
@@ -130,6 +144,20 @@ userSchema.methods.encryptPassword = async (password) => {
 userSchema.methods.matchPassword = async function (password) {
     const _this = await User.findById(this._id, { password: 1 }).exec();
     return await bcrypt.compare(password, _this.password);
+};
+
+userSchema.methods.generateUsername = async (fname, lname) => {
+    let username = `${fname}${lname}`;
+    let user = await User.exists({ username });
+    let number = 0;
+
+    while (user) {
+        number++;
+        username = `${fname}${lname}${number}`;
+        user = await User.exists({ username });
+    }
+
+    return username;
 };
 
 userSchema.pre("save", function (next) {
