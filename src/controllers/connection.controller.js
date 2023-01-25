@@ -4,6 +4,7 @@ const {
     IllegalArgumentException,
     IllegalOperationException,
     ResourceNotFoundException,
+    EntityNotFoundException,
 } = require("../throwable/exception.rootnode");
 
 /* constraints start*/
@@ -52,7 +53,7 @@ const userConnectionToggler = async (req, res, next) => {
             User.findById(rootnode._id),
             User.findById(id),
         ]);
-
+        if (!nodeToConn) throw new EntityNotFoundException("Node not found");
         const isConnected = await Connection.findOne({
             rootnode: rootnode._id,
             node: nodeToConn,
@@ -82,7 +83,7 @@ const userConnectionToggler = async (req, res, next) => {
         ]);
         res.json({
             success: true,
-            message: "Nodes linked successfully",
+            message: "Nodes linked request sent successfully",
             data: {
                 newNode: newConn,
                 hasLink: false,
@@ -103,21 +104,26 @@ const hasConnection = async (req, res, next) => {
         const validId = isValidObjectId(id);
         if (!validId) throw new IllegalArgumentException("Invalid user id");
 
-        const hasConn = await Connection.exists({
+        const hasConn = await Connection.findOne({
             rootnode: rootnode._id,
             node: id,
         });
-        if (hasConn)
+
+        if (!hasConn)
             return res.json({
                 success: true,
                 data: {
-                    hasLink: true,
+                    hasLink: false,
+                    status: "Disconnected",
                 },
             });
-        res.json({
+        const hasLink = hasConn.status == "accepted" ? true : false;
+        console.log(hasConn.status);
+        return res.json({
             success: true,
             data: {
-                hasLink: false,
+                hasLink: hasLink,
+                status: hasConn.status,
             },
         });
     } catch (err) {
@@ -130,41 +136,46 @@ const updateConnectionById = async (req, res, next) => {
     const rootnode = req.user;
     const operation = req.body.operation;
     let hasLink = false;
+    try {
+        if (!operation) throw new IllegalArgumentException("Missing operation");
+        if (!id) throw new IllegalArgumentException("Missing connection id");
+        const validId = isValidObjectId(id);
+        if (!validId)
+            throw new IllegalArgumentException("Invalid connection id");
 
-    if (!operation) throw new IllegalArgumentException("Missing operation");
-    if (!id) throw new IllegalArgumentException("Missing connection id");
-    const validId = isValidObjectId(id);
-    if (!validId) throw new IllegalArgumentException("Invalid connection id");
+        const [user, connection] = await Promise.all([
+            User.findById(rootnode._id),
+            Connection.findById(id),
+        ]);
 
-    const [user, connection] = await Promise.all([
-        User.findById(rootnode._id),
-        Connection.findById(id),
-    ]);
-
-    if (!connection)
-        return ResourceNotFoundException(
-            "Connection has not been established yet!"
-        );
-    const nodeToConn = User.findById(connection.node);
-    if (!nodeToConn) throw new ResourceNotFoundException("Conn Node not found");
-    if (!connStatusEnum.includes(operation))
-        throw new IllegalOperationException("Invalid operation parameter");
-    if (operation === "accepted") {
-        user.nodesCount++;
-        nodeToConn.nodesCount++;
-        hasLink = true;
+        if (!connection)
+            throw new ResourceNotFoundException(
+                "Connection has not been established yet!"
+            );
+        const nodeToConn = await User.findById(connection.node);
+        if (!nodeToConn)
+            throw new ResourceNotFoundException("Conn Node not found");
+        if (!connStatusEnum.includes(operation))
+            throw new IllegalOperationException("Invalid operation parameter");
+        if (operation === "accepted") {
+            user.nodesCount++;
+            nodeToConn.nodesCount++;
+            hasLink = true;
+        }
+        connection.status = operation;
+        await Promise.all([user.save(), nodeToConn.save(), connection.save()]);
+        res.json({
+            success: true,
+            message: "Connection request accepted!",
+            data: {
+                hasLink: hasLink,
+                newNode: connection,
+                linkStatus: connection.status,
+            },
+        });
+    } catch (err) {
+        next(err);
     }
-    connection.status = operation;
-    await Promise.all([user.save(), nodeToConn.save(), connection.save()]);
-    res.json({
-        success: true,
-        message: "Connection request accepted!",
-        data: {
-            hasLink: hasLink,
-            newNode: connection,
-            linkStatus: connection.status,
-        },
-    });
 };
 
 module.exports = {

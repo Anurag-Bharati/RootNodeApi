@@ -2,6 +2,7 @@ const colors = require("colors/safe");
 const dotenv = require("dotenv");
 const runApp = require("./app.js");
 const utils = require("./utils/utils.js");
+const { BaseRoutes } = require("./config/constant.js");
 const { serveRandom } = require("./utils/foods");
 const routes = require("./routes/routes.wrapper");
 const connectDBAndLaunch = require("./config/db");
@@ -18,15 +19,15 @@ const ROOT = process.env.API_URL || "/api/v0";
 const startApp = (params) => {
     const app = runApp(params);
     /* routing start */
-    app.use(`${ROOT}/auth`, routes.auth);
-    app.use(`${ROOT}/user`, routes.user);
-    app.use(`${ROOT}/post`, routes.post);
-    app.use(`${ROOT}/conn`, routes.conn);
-    app.use(`${ROOT}/story`, routes.story);
-    app.use(`${ROOT}/event`, routes.event);
+    app.use(BaseRoutes.AUTH, routes.auth);
+    app.use(BaseRoutes.USER, routes.user);
+    app.use(BaseRoutes.POST, routes.post);
+    app.use(BaseRoutes.CONN, routes.conn);
+    app.use(BaseRoutes.STRY, routes.story);
+    app.use(BaseRoutes.EVNT, routes.event);
     /* fallback routes  */
-    app.get("*", utils.notFound);
-    app.all("*", utils.notImplemented);
+    app.get(BaseRoutes.WILDCARD, utils.notFound);
+    app.all(BaseRoutes.WILDCARD, utils.notImplemented);
     /* routing end */
     app.use(errorMiddleware);
     app.listen(PORT, () => initialLogs());

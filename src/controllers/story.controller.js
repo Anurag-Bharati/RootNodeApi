@@ -95,14 +95,26 @@ const deleteAllStories = async (req, res, next) => {
 
 const getStoryById = async (req, res, next) => {
     const id = req.params.id;
+    const uid = req.user._id;
     try {
         if (!id) throw new IllegalArgumentException("Missing story id");
         if (!isValidObjectId(id))
             throw new IllegalArgumentException("Invalid story id");
         const story = await Story.findById(id);
         if (!story) throw new ResourceNotFoundException("Story not found");
+        if (story.seenBy.includes(uid))
+            return res.json({
+                success: true,
+                message: "Story already watched!",
+                data: story,
+            });
+
+        story.seenBy.push(uid);
+        story.watchCount++;
+        await story.save();
         res.json({
             success: true,
+            message: "Story watched!",
             data: story,
         });
     } catch (err) {
@@ -259,35 +271,6 @@ const getStoryWatcher = async (req, res, next) => {
     }
 };
 
-const addStoryWatcher = async (req, res, next) => {
-    const id = req.params.id;
-    const uid = req.user._id;
-    try {
-        if (!id) throw new IllegalArgumentException("Missing story id");
-        if (!isValidObjectId(id))
-            throw new IllegalArgumentException("Invalid story id");
-
-        const story = await Story.findById({ _id: id });
-        if (!story) throw new ResourceNotFoundException("Story not found");
-
-        if (story.seenBy.includes(uid))
-            return res.json({
-                success: true,
-                message: "Story already watched!",
-            });
-
-        story.seenBy.push(uid);
-        story.watchCount++;
-        await story.save();
-        res.json({
-            success: true,
-            message: "Story watched!",
-        });
-    } catch (err) {
-        next(err);
-    }
-};
-
 module.exports = {
     getAllPublicStories,
     createStory,
@@ -298,5 +281,4 @@ module.exports = {
     getStoryLiker,
     likeUnlikeStory,
     getStoryWatcher,
-    addStoryWatcher,
 };

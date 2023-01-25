@@ -26,7 +26,7 @@ const whoAmI = (req, res, next) => {
 
 const updateUserByID = (req, res, next) => {
     User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true })
-        .then((user) => res.status(200).json(user))
+        .then((user) => user.save().then(res.status(200).json(user)))
         .catch(next);
 };
 
