@@ -22,13 +22,13 @@ router
 
 router
     .use(auth.verifyUser)
-    .route("/:pid/likeunlike")
+    .route("/:id/likeunlike")
     .get(controller.getPostLiker)
     .post(controller.likeUnlikePost);
 
 router
     .use(auth.verifyUser)
-    .route("/:pid/comment")
+    .route("/:id/comment")
     .get(controller.getComments)
     .post(controller.addComment)
     .put(utils.notImplemented)
@@ -36,14 +36,14 @@ router
 
 router
     .use(auth.verifyUser)
-    .route("/comment/:cid")
+    .route("/comment/:id")
     .get(controller.getCommentByID)
     .put(controller.updateCommentByID)
     .delete(controller.deleteCommentById);
 
 router
     .use(auth.verifyUser)
-    .route("/comment/:cid/likeunlike")
+    .route("/comment/:id/likeunlike")
     .get(controller.getPostCommentLiker)
     .post(controller.likeUnlikeComment);
 

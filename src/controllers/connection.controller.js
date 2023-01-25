@@ -41,7 +41,7 @@ const getAllConnections = async (req, res, next) => {
 };
 
 const userConnectionToggler = async (req, res, next) => {
-    const id = req.params.uid;
+    const id = req.params.id;
     const rootnode = req.user;
     try {
         if (!id) throw new IllegalArgumentException("Missing user id");
@@ -96,7 +96,7 @@ const userConnectionToggler = async (req, res, next) => {
 };
 
 const hasConnection = async (req, res, next) => {
-    const id = req.params.uid;
+    const id = req.params.id;
     const rootnode = req.user;
     try {
         if (!id) throw new IllegalArgumentException("Missing user id");

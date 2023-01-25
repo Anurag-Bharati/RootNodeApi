@@ -12,14 +12,9 @@ router
 
 // Get Add Delete
 router
-    .route("/:uid")
+    .route("/:id")
     .get(auth.verifyUser, controller.hasConnection)
     .post(auth.verifyUser, controller.userConnectionToggler)
-    .all(utils.notImplemented);
-
-//  UPDATE
-router
-    .route("/update/:id")
     .put(auth.verifyUser, controller.updateConnectionById)
     .all(utils.notImplemented);
 

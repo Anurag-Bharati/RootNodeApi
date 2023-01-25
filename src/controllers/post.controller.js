@@ -140,7 +140,7 @@ const createPost = async (req, res, next) => {
 };
 
 const likeUnlikePost = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     const uid = req.user._id;
     try {
         if (!pid) throw new IllegalArgumentException("Invalid/Missing Post Id");
@@ -182,7 +182,7 @@ const likeUnlikePost = async (req, res, next) => {
 };
 
 const getPostLiker = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
@@ -215,7 +215,7 @@ const getPostLiker = async (req, res, next) => {
 };
 
 const getPostCommentLiker = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
@@ -250,7 +250,7 @@ const getPostCommentLiker = async (req, res, next) => {
 };
 
 const addComment = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     const cmt = req.body.comment;
     try {
         if (!pid) throw new IllegalArgumentException("Missing post Id");
@@ -284,7 +284,7 @@ const addComment = async (req, res, next) => {
 };
 
 const getCommentByID = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing comment id");
         const validId = isValidObjectId(cid);
@@ -301,7 +301,7 @@ const getCommentByID = async (req, res, next) => {
 };
 
 const updateCommentByID = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         const validId = isValidObjectId(cid);
@@ -321,7 +321,7 @@ const updateCommentByID = async (req, res, next) => {
 };
 
 const deleteCommentById = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         const validId = isValidObjectId(cid);
@@ -336,7 +336,7 @@ const deleteCommentById = async (req, res, next) => {
 };
 
 const getComments = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
@@ -366,7 +366,7 @@ const getComments = async (req, res, next) => {
 };
 
 const likeUnlikeComment = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     const uid = req.user._id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
