@@ -13,6 +13,8 @@ router
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllPost);
 
+router.use(auth.verifyUser).route("/feed").get(controller.getMyFeed);
+
 router
     .use(auth.verifyUser)
     .route(Routes.ID_PARAM)

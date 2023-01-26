@@ -4,6 +4,7 @@ const {
     PostLike,
     PostComment,
     PostCommentLike,
+    Connection,
 } = require("../models/models.wrapper");
 
 const {
@@ -14,12 +15,26 @@ const {
 } = require("../throwable/exception.rootnode");
 
 const { isValidObjectId } = require("mongoose");
+const { PostAlgo } = require("../utils/algorithms");
+const PostGen = require("../generator/post.gen");
 
 /* constraints start*/
-const postPerPage = 5;
+const postPerPage = 1;
 const commentsPerPage = 5;
 const likerPerPage = 10;
+const populateFilterOwner = [
+    "username",
+    "fname",
+    "lname",
+    "avatar",
+    "showOnlineStatus",
+    "isVerified",
+];
 /* constraints end*/
+
+/* runtime store */
+const userFeed = new Map();
+/* runtime end */
 
 const getAllPublicPost = async (req, res, next) => {
     let page = req.query.page || 1;
@@ -28,6 +43,7 @@ const getAllPublicPost = async (req, res, next) => {
         const [publicFeed, totalPages] = await Promise.all([
             // execute query with page and limit values
             Post.find({ visibility: "public" })
+                .populate("owner", populateFilterOwner)
                 .sort("-createdAt")
                 .limit(postPerPage)
                 .skip((page - 1) * postPerPage)
@@ -39,6 +55,60 @@ const getAllPublicPost = async (req, res, next) => {
             success: true,
             data: publicFeed,
             totalPages: Math.ceil(totalPages / postPerPage),
+            currentPage: Number(page),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getMyFeed = async (req, res, next) => {
+    let { page, refresh } = req.query;
+    const user = req.user;
+    const uidStr = user._id.toString();
+    page = page > 0 ? page : 1;
+    refresh = refresh == 1 ? true : false;
+
+    let feed = [];
+    const conns = [];
+
+    try {
+        if (refresh === true) userFeed.delete(uidStr);
+        if (!userFeed.has(uidStr)) {
+            console.log(
+                "↪".bold,
+                " PostFeed ".cyan.bold.inverse,
+                `generating new feed for ${user.username}`.cyan
+            );
+            const [myConns, theirConns] = await Promise.all([
+                Connection.find({ rootnode: user._id, status: "accepted" }),
+                Connection.find({ node: user._id, status: "accepted" }),
+            ]);
+
+            myConns.map((conn) => conns.push(conn.node));
+            theirConns.map((conn) => conns.push(conn.rootnode));
+            await PostGen.generateFeed(conns, feed, populateFilterOwner);
+            PostAlgo.shuffle(feed);
+            userFeed.set(uidStr, feed);
+        } else {
+            console.log(
+                "↪".bold,
+                " PostFeed ".cyan.bold.inverse,
+                `using old feed for ${user.username}`.cyan
+            );
+            feed = userFeed.get(uidStr);
+        }
+        const paginatedFeed = feed.slice(
+            (page - 1) * postPerPage,
+            page * postPerPage
+        );
+
+        const count = feed.length;
+
+        res.json({
+            success: true,
+            data: paginatedFeed,
+            totalPages: Math.ceil(count / postPerPage),
             currentPage: Number(page),
         });
     } catch (err) {
@@ -497,6 +567,7 @@ const deleteAllPost = async (req, res, next) => {
 
 module.exports = {
     getAllPublicPost,
+    getMyFeed,
     getPostById,
     createPost,
     updatePostById,
