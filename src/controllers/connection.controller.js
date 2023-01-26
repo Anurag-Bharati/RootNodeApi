@@ -18,8 +18,10 @@ const getAllConnections = async (req, res, next) => {
     const rootnode = req.user;
     try {
         const connsPromise = Connection.find({
-            rootnode: rootnode._id,
-            status: "accepted",
+            $or: [
+                { rootnode: rootnode._id, status: "accepted" },
+                { node: rootnode._id, status: "accepted" },
+            ],
         })
             .sort("-createdAt")
             .limit(connPerPage)
@@ -54,23 +56,32 @@ const userConnectionToggler = async (req, res, next) => {
             User.findById(id),
         ]);
         if (!nodeToConn) throw new EntityNotFoundException("Node not found");
+        if (user.equals(nodeToConn))
+            throw new IllegalOperationException("Cannot connect to self");
         const isConnected = await Connection.findOne({
-            rootnode: rootnode._id,
-            node: nodeToConn,
+            $or: [
+                { rootnode: rootnode._id, node: nodeToConn },
+                { rootnode: nodeToConn, node: rootnode._id },
+            ],
         });
 
         if (isConnected) {
+            let msg;
+            if (isConnected.status == "pending")
+                msg = "Removed link-request successfully";
+            else msg = "Node unlinked successfully";
             if (user.nodesCount > 0) user.nodesCount--;
             if (nodeToConn.nodesCount > 0) nodeToConn.nodesCount--;
             await Promise.all([
-                user.save(),
                 isConnected.remove(),
+                user.save(),
                 nodeToConn.save(),
             ]);
+
             return res.json({
                 success: true,
-                message: "Node unlinked successfully",
-                data: { hasLink: false },
+                message: msg,
+                data: { conn: isConnected, requested: false },
             });
         }
         const newConnPromise = Connection.create({
@@ -84,12 +95,7 @@ const userConnectionToggler = async (req, res, next) => {
         res.json({
             success: true,
             message: "Nodes linked request sent successfully",
-            data: {
-                newNode: newConn,
-                hasLink: false,
-                linkStatus: newConn.status,
-                connCount: updatedRoot.nodesCount,
-            },
+            data: { conn: newConn, requested: true },
         });
     } catch (err) {
         next(err);
@@ -114,7 +120,7 @@ const hasConnection = async (req, res, next) => {
                 success: true,
                 data: {
                     hasLink: false,
-                    status: "Disconnected",
+                    status: "disconnected",
                 },
             });
         const hasLink = hasConn.status == "accepted" ? true : false;
@@ -133,7 +139,7 @@ const hasConnection = async (req, res, next) => {
 
 const updateConnectionById = async (req, res, next) => {
     const id = req.params.id;
-    const rootnode = req.user;
+    const uid = req.user._id;
     const operation = req.body.operation;
     let hasLink = false;
     try {
@@ -143,33 +149,43 @@ const updateConnectionById = async (req, res, next) => {
         if (!validId)
             throw new IllegalArgumentException("Invalid connection id");
 
-        const [user, connection] = await Promise.all([
-            User.findById(rootnode._id),
-            Connection.findById(id),
-        ]);
+        const connection = await Connection.findById(id);
 
         if (!connection)
             throw new ResourceNotFoundException(
                 "Connection has not been established yet!"
             );
+        if (!connection.node.equals(uid))
+            throw new IllegalOperationException("Cannot update request");
         const nodeToConn = await User.findById(connection.node);
         if (!nodeToConn)
             throw new ResourceNotFoundException("Conn Node not found");
+
         if (!connStatusEnum.includes(operation))
             throw new IllegalOperationException("Invalid operation parameter");
-        if (operation === "accepted") {
-            user.nodesCount++;
-            nodeToConn.nodesCount++;
-            hasLink = true;
+        if (connection.status === "accepted" && operation == "accepted") {
+            return res.json({
+                success: false,
+                message: "Connection request already accepted!",
+                data: { hasLink: true, linkStatus: connection.status },
+            });
         }
+        const [rootnode, node] = await Promise.all([
+            User.findById(connection.rootnode),
+            User.findById(connection.node),
+        ]);
+        if (operation === "accepted") {
+            rootnode.nodesCount++;
+            node.nodesCount++;
+            hasLink = true;
+        } else return res.sendStatus(403);
         connection.status = operation;
-        await Promise.all([user.save(), nodeToConn.save(), connection.save()]);
+        await Promise.all([rootnode.save(), node.save(), connection.save()]);
         res.json({
             success: true,
             message: "Connection request accepted!",
             data: {
                 hasLink: hasLink,
-                newNode: connection,
                 linkStatus: connection.status,
             },
         });
