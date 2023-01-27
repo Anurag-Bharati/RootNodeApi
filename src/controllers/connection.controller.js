@@ -47,11 +47,11 @@ const getAllConnections = async (req, res, next) => {
 
 const getMyOldAndRecentConns = async (req, res, next) => {
     const user = req.user;
-
     try {
-        let [old, recent] = await ConnGen.generateConnOverview(user._id, {
-            limit: limitConstraint,
-        });
+        let [old, recent, count] = await ConnGen.generateConnOverview(
+            user._id,
+            { limit: limitConstraint }
+        );
         old = old.map((conn) =>
             conn.rootnode.equals(user._id)
                 ? { user: conn.node, date: conn.createdAt }
@@ -69,6 +69,7 @@ const getMyOldAndRecentConns = async (req, res, next) => {
                 old: old,
                 recent: recent,
                 limit: limitConstraint,
+                count: count > 6 ? count - limitConstraint * 2 : 0,
             },
         });
     } catch (err) {
