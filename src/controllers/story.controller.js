@@ -1,16 +1,27 @@
 const { isValidObjectId } = require("mongoose");
-const { User, Story, StoryLike } = require("../models/models.wrapper");
+const StoryGen = require("../generator/story.gen");
+const {
+    User,
+    Story,
+    StoryLike,
+    Connection,
+} = require("../models/models.wrapper");
 
 const {
     IllegalArgumentException,
     ResourceNotFoundException,
 } = require("../throwable/exception.rootnode");
+const { Sort } = require("../utils/algorithms");
 
 /* constraints start*/
 const storyPerPage = 5;
 const likerPerPage = 10;
 const watcherPerPage = 10;
 /* constraints end*/
+
+/* runtime store */
+const userStoryFeed = new Map();
+/* runtime end */
 
 const getAllPublicStories = async (req, res, next) => {
     let page = req.query.page || 1;
@@ -35,6 +46,64 @@ const getAllPublicStories = async (req, res, next) => {
         next(err);
     }
 };
+
+const getMyStoryFeed = async (req, res, next) => {
+    let { page, refresh } = req.query;
+    const user = req.user;
+    const uidStr = user._id.toString();
+    page = page > 0 ? page : 1;
+    refresh = refresh == 1 ? true : false;
+
+    let storyFeed = [];
+    const conns = [];
+
+    try {
+        if (refresh === true) userStoryFeed.delete(uidStr);
+        if (!userStoryFeed.has(uidStr)) {
+            console.log(
+                "↪".bold,
+                " StoryFeed ".cyan.bold.inverse,
+                `generating new feed for ${user.username}`.cyan
+            );
+            const [myConns, theirConns] = await Promise.all([
+                Connection.find({ rootnode: user._id, status: "accepted" }),
+                Connection.find({ node: user._id, status: "accepted" }),
+            ]);
+
+            myConns.map((conn) => conns.push(conn.node));
+            theirConns.map((conn) => conns.push(conn.rootnode));
+
+            await StoryGen.generateStoryFeed(conns, storyFeed);
+            storyFeed.sort(Sort.dynamicSort("-createdAt"));
+
+            userStoryFeed.set(uidStr, storyFeed);
+        } else {
+            console.log(
+                "↪".bold,
+                " StoryFeed ".cyan.bold.inverse,
+                `using old feed for ${user.username}`.cyan
+            );
+
+            storyFeed = userStoryFeed.get(uidStr);
+        }
+        const paginatedFeed = storyFeed.slice(
+            (page - 1) * storyPerPage,
+            page * storyPerPage
+        );
+
+        const count = storyFeed.length;
+
+        res.json({
+            success: true,
+            data: paginatedFeed,
+            totalPages: Math.ceil(count / storyPerPage),
+            currentPage: Number(page),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 const createStory = async (req, res, next) => {
     const { heading, visibility, likeable } = req.body;
     const media = req.file;
@@ -273,6 +342,7 @@ const getStoryWatcher = async (req, res, next) => {
 
 module.exports = {
     getAllPublicStories,
+    getMyStoryFeed,
     createStory,
     deleteAllStories,
     getStoryById,

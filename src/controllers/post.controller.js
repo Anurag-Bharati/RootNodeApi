@@ -15,21 +15,13 @@ const {
 } = require("../throwable/exception.rootnode");
 
 const { isValidObjectId } = require("mongoose");
-const { PostAlgo } = require("../utils/algorithms");
+const { Sort } = require("../utils/algorithms");
 const PostGen = require("../generator/post.gen");
-
+const EntityFieldsFilter = require("../utils/entity.filter");
 /* constraints start*/
-const postPerPage = 1;
+const postPerPage = 5;
 const commentsPerPage = 5;
 const likerPerPage = 10;
-const populateFilterOwner = [
-    "username",
-    "fname",
-    "lname",
-    "avatar",
-    "showOnlineStatus",
-    "isVerified",
-];
 /* constraints end*/
 
 /* runtime store */
@@ -43,7 +35,7 @@ const getAllPublicPost = async (req, res, next) => {
         const [publicFeed, totalPages] = await Promise.all([
             // execute query with page and limit values
             Post.find({ visibility: "public" })
-                .populate("owner", populateFilterOwner)
+                .populate("owner", EntityFieldsFilter.OWNER)
                 .sort("-createdAt")
                 .limit(postPerPage)
                 .skip((page - 1) * postPerPage)
@@ -87,8 +79,8 @@ const getMyFeed = async (req, res, next) => {
 
             myConns.map((conn) => conns.push(conn.node));
             theirConns.map((conn) => conns.push(conn.rootnode));
-            await PostGen.generateFeed(conns, feed, populateFilterOwner);
-            PostAlgo.shuffle(feed);
+            await PostGen.generateFeed(conns, feed);
+            Sort.shuffle(feed);
             userFeed.set(uidStr, feed);
         } else {
             console.log(

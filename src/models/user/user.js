@@ -94,8 +94,13 @@ const userSchema = new Schema(
 
         usernameChangedAt: Date,
     },
-    { timestamps: true }
+    { timestamps: true },
+    { toObject: { getters: true } }
 );
+
+userSchema.virtual("fullname").get(function () {
+    return `${this.fname} ${this.lname}`;
+});
 
 userSchema.methods.generateRefreshToken = async function () {
     const token = jwt.sign(

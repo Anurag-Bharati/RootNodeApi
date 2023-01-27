@@ -26,6 +26,7 @@ const SEENBY = "/seenBy";
 const MY = "/my";
 const OPS_JOIN = "/joinleave";
 const OPS_INTERESTED = "/interested";
+const FEED = "/feed";
 
 const ID_VAR = "id";
 const ID_PARAM = `/:${ID_VAR}`;
@@ -50,6 +51,7 @@ Routes.LOGOUT = LOGOUT;
 Routes.WHOAMI = WHOAMI;
 Routes.ISUNIQUE = ISUNIQUE;
 Routes.ID_PARAM = ID_PARAM;
+Routes.FEED = FEED;
 
 Routes.ID_LIKE = ID_PARAM + OPS_LIKE;
 Routes.POST_CMNT = ID_PARAM + CMNT;

@@ -1,13 +1,12 @@
-const { Post, User } = require("../models/models.wrapper");
+const { Story, User } = require("../models/models.wrapper");
 const EntityFieldsFilter = require("../utils/entity.filter");
-const PostGen = {};
-/* Feed */
-const generateFeed = async (conns, feed) => {
+const StoryGen = {};
+const generateStoryFeed = async (conns, feed) => {
     await Promise.all(
         conns.map(async (id) => {
-            let postUser = await User.findById(id);
-            let posts = postUser
-                ? await Post.find({
+            let storyUser = await User.findById(id);
+            let stories = storyUser
+                ? await Story.find({
                       $or: [
                           { visibility: "public" },
                           { visibility: "follower" },
@@ -17,13 +16,11 @@ const generateFeed = async (conns, feed) => {
                       .sort("-createdAt")
                       .populate("owner", EntityFieldsFilter.OWNER)
                 : {};
-            posts.forEach((element) => {
+            stories.forEach((element) => {
                 feed.push(element);
             });
         })
     );
 };
-
-PostGen.generateFeed = generateFeed;
-
-module.exports = PostGen;
+StoryGen.generateStoryFeed = generateStoryFeed;
+module.exports = StoryGen;
