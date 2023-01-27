@@ -1,4 +1,5 @@
 const { isValidObjectId } = require("mongoose");
+const ConnGen = require("../generator/conn.gen");
 const { Connection, User } = require("../models/models.wrapper");
 const {
     IllegalArgumentException,
@@ -9,6 +10,7 @@ const {
 
 /* constraints start*/
 const connPerPage = 5;
+const limitConstraint = 3;
 const connStatusEnum = ["accepted", "rejected", "pending"];
 /* constraints end*/
 
@@ -37,6 +39,37 @@ const getAllConnections = async (req, res, next) => {
             data: conns,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getMyOldAndRecentConns = async (req, res, next) => {
+    const user = req.user;
+
+    try {
+        let [old, recent] = await ConnGen.generateConnOverview(user._id, {
+            limit: limitConstraint,
+        });
+        old = old.map((conn) =>
+            conn.rootnode.equals(user._id)
+                ? { user: conn.node, date: conn.createdAt }
+                : { user: conn.rootnode, date: conn.createdAt }
+        );
+        recent = recent.map((conn) =>
+            conn.rootnode.equals(user._id)
+                ? { user: conn.node, date: conn.createdAt }
+                : { user: conn.rootnode, date: conn.createdAt }
+        );
+        res.json({
+            success: true,
+            message: "Successfully generated old and recent conns",
+            data: {
+                old: old,
+                recent: recent,
+                limit: limitConstraint,
+            },
         });
     } catch (err) {
         next(err);
@@ -196,6 +229,7 @@ const updateConnectionById = async (req, res, next) => {
 
 module.exports = {
     getAllConnections,
+    getMyOldAndRecentConns,
     hasConnection,
     userConnectionToggler,
     updateConnectionById,

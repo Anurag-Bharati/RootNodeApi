@@ -12,6 +12,7 @@ const {
     ResourceNotFoundException,
 } = require("../throwable/exception.rootnode");
 const { Sort } = require("../utils/algorithms");
+const EntityFieldsFilter = require("../utils/entity.filter");
 
 /* constraints start*/
 const storyPerPage = 5;
@@ -29,7 +30,7 @@ const getAllPublicStories = async (req, res, next) => {
     try {
         const [publicStories, totalPages] = await Promise.all([
             Story.find({ visibility: "public" })
-                .populate("owner", ["username", "showOnlineStatus", "avatar"])
+                .populate("owner", EntityFieldsFilter.USER)
                 .sort("-createdAt")
                 .limit(storyPerPage)
                 .skip((page - 1) * storyPerPage)
@@ -73,7 +74,7 @@ const getMyStoryFeed = async (req, res, next) => {
             myConns.map((conn) => conns.push(conn.node));
             theirConns.map((conn) => conns.push(conn.rootnode));
 
-            await StoryGen.generateStoryFeed(conns, storyFeed);
+            await StoryGen.generateStoryFeed(user._id, conns, storyFeed);
             storyFeed.sort(Sort.dynamicSort("-createdAt"));
 
             userStoryFeed.set(uidStr, storyFeed);

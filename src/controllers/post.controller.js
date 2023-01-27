@@ -35,7 +35,7 @@ const getAllPublicPost = async (req, res, next) => {
         const [publicFeed, totalPages] = await Promise.all([
             // execute query with page and limit values
             Post.find({ visibility: "public" })
-                .populate("owner", EntityFieldsFilter.OWNER)
+                .populate("owner", EntityFieldsFilter.USER)
                 .sort("-createdAt")
                 .limit(postPerPage)
                 .skip((page - 1) * postPerPage)

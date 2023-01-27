@@ -15,7 +15,7 @@ const generateFeed = async (conns, feed) => {
                       owner: id,
                   })
                       .sort("-createdAt")
-                      .populate("owner", EntityFieldsFilter.OWNER)
+                      .populate("owner", EntityFieldsFilter.USER)
                 : {};
             posts.forEach((element) => {
                 feed.push(element);

@@ -1,6 +1,6 @@
 const EntityFieldsFilter = {};
 
-const OWNER = [
+const USER = [
     "username",
     "fname",
     "lname",
@@ -9,5 +9,5 @@ const OWNER = [
     "isVerified",
 ];
 
-EntityFieldsFilter.OWNER = OWNER;
+EntityFieldsFilter.USER = USER;
 module.exports = EntityFieldsFilter;
