@@ -29,8 +29,12 @@ const userFeed = new Map();
 /* runtime end */
 
 const getAllPublicPost = async (req, res, next) => {
+    const user = req.user;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
     try {
         const [publicFeed, totalPages] = await Promise.all([
             // execute query with page and limit values
@@ -43,9 +47,10 @@ const getAllPublicPost = async (req, res, next) => {
             // get total documents in the Posts collection
             Post.countDocuments(),
         ]);
+        if (user?._id) await PostGen.generateMeta(user._id, publicFeed, meta);
         res.json({
             success: true,
-            data: publicFeed,
+            data: { feed: publicFeed, meta: meta },
             totalPages: Math.ceil(totalPages / postPerPage),
             currentPage: Number(page),
         });
@@ -63,6 +68,9 @@ const getMyFeed = async (req, res, next) => {
 
     let feed = [];
     const conns = [];
+    const meta = {
+        isLiked: [],
+    };
 
     try {
         if (refresh === true) userFeed.delete(uidStr);
@@ -79,7 +87,7 @@ const getMyFeed = async (req, res, next) => {
 
             myConns.map((conn) => conns.push(conn.node));
             theirConns.map((conn) => conns.push(conn.rootnode));
-            await PostGen.generateFeed(conns, feed);
+            await PostGen.generateFeed(user._id, conns, feed);
             Sort.shuffle(feed);
             userFeed.set(uidStr, feed);
         } else {
@@ -94,12 +102,12 @@ const getMyFeed = async (req, res, next) => {
             (page - 1) * postPerPage,
             page * postPerPage
         );
-
+        await PostGen.generateMeta(user._id, paginatedFeed, meta);
         const count = feed.length;
 
         res.json({
             success: true,
-            data: paginatedFeed,
+            data: { feed: paginatedFeed, meta: meta },
             totalPages: Math.ceil(count / postPerPage),
             currentPage: Number(page),
         });

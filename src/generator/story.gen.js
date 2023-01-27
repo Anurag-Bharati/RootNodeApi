@@ -1,6 +1,7 @@
-const { Story, User } = require("../models/models.wrapper");
+const { Story, User, StoryLike } = require("../models/models.wrapper");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const StoryGen = {};
+
 const generateStoryFeed = async (uid, conns, feed) => {
     await Promise.all(
         conns.map(async (id) => {
@@ -24,5 +25,16 @@ const generateStoryFeed = async (uid, conns, feed) => {
         })
     );
 };
+
+const generateMeta = async (uid, stories, meta) => {
+    for (let i in stories) {
+        let liked = await StoryLike.exists({
+            story: stories[i]._id,
+            user: uid,
+        });
+        meta.isLiked.push(liked ? true : false);
+    }
+};
 StoryGen.generateStoryFeed = generateStoryFeed;
+StoryGen.generateMeta = generateMeta;
 module.exports = StoryGen;

@@ -57,7 +57,9 @@ const getMyStoryFeed = async (req, res, next) => {
 
     let storyFeed = [];
     const conns = [];
-
+    const meta = {
+        isLiked: [],
+    };
     try {
         if (refresh === true) userStoryFeed.delete(uidStr);
         if (!userStoryFeed.has(uidStr)) {
@@ -91,6 +93,7 @@ const getMyStoryFeed = async (req, res, next) => {
             (page - 1) * storyPerPage,
             page * storyPerPage
         );
+        await StoryGen.generateMeta(user._id, paginatedFeed, meta);
 
         const count = storyFeed.length;
 
