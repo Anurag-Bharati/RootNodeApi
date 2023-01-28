@@ -23,7 +23,7 @@ router
     .use(auth.verifyUser)
     .route(Routes.ID_PARAM)
     .get(controller.getStoryById)
-    .post(utils.notImplemented)
+    .post(controller.storyWatched)
     .put(upload.single("media"), controller.updateStoryById)
     .delete(controller.deleteStoryById);
 

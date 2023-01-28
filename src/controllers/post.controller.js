@@ -38,7 +38,7 @@ const getAllPublicPost = async (req, res, next) => {
         isLiked: [],
     };
     try {
-        const [publicFeed, totalPages] = await Promise.all([
+        const [publicFeed, totalPosts] = await Promise.all([
             // execute query with page and limit values
             Post.find({ visibility: "public" })
                 .populate("owner", EntityFieldsFilter.USER)
@@ -47,14 +47,14 @@ const getAllPublicPost = async (req, res, next) => {
                 .skip((page - 1) * postPerPage)
                 .exec(),
             // get total documents in the Posts collection
-            Post.countDocuments(),
+            Post.countDocuments({ visibility: "public" }),
         ]);
         if (user?._id) await PostGen.generateMeta(user._id, publicFeed, meta);
-
+        else meta.isLiked = new Array(totalPosts).fill(false);
         res.json({
             success: true,
             data: { feed: publicFeed, meta: meta },
-            totalPages: Math.ceil(totalPages / postPerPage),
+            totalPages: Math.ceil(totalPosts / postPerPage),
             currentPage: Number(page),
             _links: {
                 self: HyperLinks.postLinks,
@@ -92,7 +92,7 @@ const getMyFeed = async (req, res, next) => {
             myConns.map((conn) => conns.push(conn.node));
             theirConns.map((conn) => conns.push(conn.rootnode));
             await PostGen.generateFeed(user._id, conns, feed);
-            Sort.shuffle(feed);
+            feed.sort(Sort.dynamicSort("-createdAt"));
             userFeed.set(uidStr, feed);
         } else {
             ConsoleLog.usingOldX("PostFeed", "feed", user.username);

@@ -8,10 +8,7 @@ const generateStoryFeed = async (uid, conns, feed) => {
             let storyUser = await User.findById(id);
             let stories = storyUser
                 ? await Story.find({
-                      $or: [
-                          { visibility: "public" },
-                          { visibility: "follower" },
-                      ],
+                      $or: [{ visibility: "public" }, { visibility: "mutual" }],
 
                       $nor: [{ seenBy: uid }],
                       owner: id,

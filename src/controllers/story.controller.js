@@ -113,18 +113,18 @@ const getMyStoryFeed = async (req, res, next) => {
 };
 
 const createStory = async (req, res, next) => {
-    const { heading, visibility, likeable } = req.body;
+    const { quote, visibility, likeable } = req.body;
     const media = req.file;
     const hasMedia = media !== null && media !== undefined;
     const uid = req.user._id;
     let cleanedMedia = null;
     try {
-        if (!heading && !hasMedia)
+        if (!quote && !hasMedia)
             throw new IllegalArgumentException("Invalid Story parameters");
 
         let type;
-        if (hasMedia && heading) type = "mixed";
-        else if (hasMedia && !heading) type = "media";
+        if (hasMedia && quote) type = "mixed";
+        else if (hasMedia && !quote) type = "media";
         else type = "text";
 
         if (hasMedia) {
@@ -137,7 +137,7 @@ const createStory = async (req, res, next) => {
         const storyPromise = Story.create({
             type: type,
             owner: uid,
-            heading: heading,
+            quote: quote,
             media: cleanedMedia,
             visibility: visibility,
             likeable: likeable,
@@ -195,6 +195,33 @@ const getStoryById = async (req, res, next) => {
             message: "Story watched!",
             data: story,
             _links: { self: HyperLinks.storyOpsLinks(id) },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const storyWatched = async (req, res, next) => {
+    const id = req.params.id;
+    const uid = req.user._id;
+    try {
+        if (!id) throw new IllegalArgumentException("Missing story id");
+        if (!isValidObjectId(id))
+            throw new IllegalArgumentException("Invalid story id");
+        const story = await Story.findById(id);
+        if (!story) throw new ResourceNotFoundException("Story not found");
+        if (story.seenBy.includes(uid))
+            return res.json({
+                success: true,
+                message: "Story already watched!",
+            });
+
+        story.seenBy.push(uid);
+        story.watchCount++;
+        await story.save();
+        res.json({
+            success: true,
+            message: "Story watched!",
         });
     } catch (err) {
         next(err);
@@ -368,4 +395,5 @@ module.exports = {
     getStoryLiker,
     likeUnlikeStory,
     getStoryWatcher,
+    storyWatched,
 };

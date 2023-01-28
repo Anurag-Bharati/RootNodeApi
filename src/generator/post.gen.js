@@ -9,10 +9,7 @@ const generateFeed = async (uid, conns, feed) => {
             let postUser = await User.findById(id);
             let posts = postUser
                 ? await Post.find({
-                      $or: [
-                          { visibility: "public" },
-                          { visibility: "follower" },
-                      ],
+                      $or: [{ visibility: "public" }, { visibility: "mutual" }],
                       owner: id,
                   })
                       .sort("-createdAt")
