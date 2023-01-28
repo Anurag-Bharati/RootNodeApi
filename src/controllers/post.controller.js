@@ -179,9 +179,8 @@ const createPost = async (req, res, next) => {
                 });
             });
         }
-
         let type;
-        if (isMarkdown === true) type = "markdown";
+        if (isMarkdown == "true") type = "markdown";
         else if (hasMedia && caption) type = "mixed";
         else if (hasMedia && !caption) type = "media";
         else type = "text";

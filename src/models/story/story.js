@@ -19,7 +19,7 @@ const storySchema = new Schema(
             maxlength: 128,
             trim: true,
         },
-
+        color: { type: Number, default: 0xff00bcd4 },
         media: {
             url: String,
             type: {

@@ -66,7 +66,7 @@ const postSchema = new Schema(
 
         visibility: {
             type: String,
-            enum: ["public", "private", "followers"],
+            enum: ["public", "private", "mutual"],
             default: "public",
         },
 

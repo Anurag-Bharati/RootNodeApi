@@ -4,10 +4,12 @@ const path = require("path");
 const pipeline = require("./middleware/pipeline");
 const logger = require("./utils/logger");
 const staticPath = path.join(__dirname, "/../", "/public/");
+const cors = require("cors");
 const runApp = (params) => {
     const app = express();
     app.set("trust proxy", true);
     app.use(cookieParser());
+    app.use(cors("*"));
     pipeline.init(logger, params.showCause);
     app.use(pipeline.entryMiddleware);
     app.use(pipeline.exitMiddleware);
