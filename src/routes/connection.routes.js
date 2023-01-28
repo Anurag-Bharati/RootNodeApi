@@ -7,16 +7,33 @@ const { Routes } = require("../config/constant");
 
 // GET
 router
+    .use(auth.verifyUser)
     .route(Routes.BASE)
-    .get(auth.verifyUser, controller.getAllConnections)
+    .get(controller.getAllConnections)
+    .all(utils.notImplemented);
+
+router
+    .route(Routes.OLD_RECENT_CONNS)
+    .get(auth.verifyUser, controller.getMyOldAndRecentConns)
+    .all(utils.notImplemented);
+
+router
+    .route(Routes.RECOM)
+    .get(auth.verifyUser, controller.getRecommendedConns)
+    .all(utils.notImplemented);
+
+router
+    .route(Routes.RANDOM)
+    .get(auth.verifyUser, controller.getRandomConns)
     .all(utils.notImplemented);
 
 // Get Add Delete
 router
+    .use(auth.verifyUser)
     .route(Routes.ID_PARAM)
-    .get(auth.verifyUser, controller.hasConnection)
-    .post(auth.verifyUser, controller.userConnectionToggler)
-    .put(auth.verifyUser, controller.updateConnectionById)
+    .get(controller.hasConnection)
+    .post(controller.userConnectionToggler)
+    .put(controller.updateConnectionById)
     .all(utils.notImplemented);
 
 router;

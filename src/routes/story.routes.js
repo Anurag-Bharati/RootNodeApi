@@ -15,6 +15,12 @@ router
 
 router
     .use(auth.verifyUser)
+    .route(Routes.FEED)
+    .get(controller.getMyStoryFeed)
+    .all(utils.notImplemented);
+
+router
+    .use(auth.verifyUser)
     .route(Routes.ID_PARAM)
     .get(controller.getStoryById)
     .post(utils.notImplemented)
