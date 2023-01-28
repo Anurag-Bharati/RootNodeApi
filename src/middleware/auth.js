@@ -24,7 +24,7 @@ const verifyUser = (req, res, next) => {
     });
 };
 
-const checkUserOrAnonymous = (req, res, next) => {
+const userBeOptional = (req, res, next) => {
     if (!req.headers.authorization) return next();
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
@@ -54,4 +54,4 @@ const isMod = (req, res, next) => {
     next();
 };
 
-module.exports = { verifyUser, isAdmin, isMod, checkUserOrAnonymous };
+module.exports = { verifyUser, isAdmin, isMod, userBeOptional };

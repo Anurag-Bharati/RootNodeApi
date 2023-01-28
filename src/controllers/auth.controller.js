@@ -47,13 +47,11 @@ const handleLogin = async (req, res, next) => {
 
         let session = await UserSession.findOne({ user: user._id });
         if (!session) session = await user.generateRefreshToken();
-
         if (nowInSec > session.expiresAt) {
             await session.remove();
-            authToken = await session.generateToken();
+            session = await user.generateRefreshToken();
         }
-
-        let accessToken = await user.generateAccessToken();
+        const accessToken = await user.generateAccessToken();
 
         console.log(
             "↪".bold,

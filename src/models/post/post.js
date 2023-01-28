@@ -85,8 +85,13 @@ const postSchema = new Schema(
             default: true,
         },
     },
-    { timestamps: true }
+    { timestamps: true },
+    { toObject: { getters: true } }
 );
+
+postSchema.virtual("createdAt_ms").get(function () {
+    return this.createdAt.getTime();
+});
 
 const Post = model("Post", postSchema);
 

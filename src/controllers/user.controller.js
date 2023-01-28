@@ -10,9 +10,7 @@ const getAllUsers = (req, res, next) => {
 };
 
 const getUserByID = (req, res, next) => {
-    const uid = req.params.id;
-    const isValid = isValidObjectId(uid);
-    if (!isValid) return next(new IllegalArgumentException("Invalid user id"));
+    const uid = req.user._id;
     User.findById(uid)
         .then((user) => res.json(user))
         .catch(next);
@@ -25,7 +23,7 @@ const whoAmI = (req, res, next) => {
 };
 
 const updateUserByID = (req, res, next) => {
-    User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true })
+    User.findByIdAndUpdate(req.user._id, { $set: req.body }, { new: true })
         .then((user) => user.save().then(res.status(200).json(user)))
         .catch(next);
 };
