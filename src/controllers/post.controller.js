@@ -18,6 +18,7 @@ const { isValidObjectId } = require("mongoose");
 const { Sort } = require("../utils/algorithms");
 const PostGen = require("../generator/post.gen");
 const EntityFieldsFilter = require("../utils/entity.filter");
+const ConsoleLog = require("../utils/log.console");
 /* constraints start*/
 const postPerPage = 5;
 const commentsPerPage = 5;
@@ -75,11 +76,7 @@ const getMyFeed = async (req, res, next) => {
     try {
         if (refresh === true) userFeed.delete(uidStr);
         if (!userFeed.has(uidStr)) {
-            console.log(
-                "↪".bold,
-                " PostFeed ".cyan.bold.inverse,
-                `generating new feed for ${user.username}`.cyan
-            );
+            ConsoleLog.genNewX("PostFeed", "feed", user.username);
             const [myConns, theirConns] = await Promise.all([
                 Connection.find({ rootnode: user._id, status: "accepted" }),
                 Connection.find({ node: user._id, status: "accepted" }),
@@ -91,11 +88,8 @@ const getMyFeed = async (req, res, next) => {
             Sort.shuffle(feed);
             userFeed.set(uidStr, feed);
         } else {
-            console.log(
-                "↪".bold,
-                " PostFeed ".cyan.bold.inverse,
-                `using old feed for ${user.username}`.cyan
-            );
+            ConsoleLog.usingOldX("PostFeed", "feed", user.username);
+
             feed = userFeed.get(uidStr);
         }
         const paginatedFeed = feed.slice(

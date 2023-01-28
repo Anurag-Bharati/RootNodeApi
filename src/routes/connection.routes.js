@@ -13,9 +13,18 @@ router
     .all(utils.notImplemented);
 
 router
-    .use(auth.verifyUser)
     .route(Routes.OLD_RECENT_CONNS)
-    .get(controller.getMyOldAndRecentConns)
+    .get(auth.verifyUser, controller.getMyOldAndRecentConns)
+    .all(utils.notImplemented);
+
+router
+    .route(Routes.RECOM)
+    .get(auth.verifyUser, controller.getRecommendedConns)
+    .all(utils.notImplemented);
+
+router
+    .route(Routes.RANDOM)
+    .get(auth.verifyUser, controller.getRandomConns)
     .all(utils.notImplemented);
 
 // Get Add Delete

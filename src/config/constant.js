@@ -28,6 +28,8 @@ const OPS_JOIN = "/join-leave";
 const OPS_INTERESTED = "/interested";
 const FEED = "/feed";
 const OLD_RECENT_CONNS = "/old-recent";
+const RECOM = "/recom";
+const RANDOM = "/random";
 
 const ID_VAR = "id";
 const ID_PARAM = `/:${ID_VAR}`;
@@ -53,6 +55,8 @@ Routes.WHOAMI = WHOAMI;
 Routes.ISUNIQUE = ISUNIQUE;
 Routes.ID_PARAM = ID_PARAM;
 Routes.FEED = FEED;
+Routes.RECOM = RECOM;
+Routes.RANDOM = RANDOM;
 Routes.OLD_RECENT_CONNS = OLD_RECENT_CONNS;
 
 Routes.ID_LIKE = ID_PARAM + OPS_LIKE;

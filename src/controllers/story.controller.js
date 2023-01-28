@@ -13,6 +13,7 @@ const {
 } = require("../throwable/exception.rootnode");
 const { Sort } = require("../utils/algorithms");
 const EntityFieldsFilter = require("../utils/entity.filter");
+const ConsoleLog = require("../utils/log.console");
 
 /* constraints start*/
 const storyPerPage = 5;
@@ -63,11 +64,7 @@ const getMyStoryFeed = async (req, res, next) => {
     try {
         if (refresh === true) userStoryFeed.delete(uidStr);
         if (!userStoryFeed.has(uidStr)) {
-            console.log(
-                "↪".bold,
-                " StoryFeed ".cyan.bold.inverse,
-                `generating new feed for ${user.username}`.cyan
-            );
+            ConsoleLog.genNewX("StoryFeed", "feed", user.username);
             const [myConns, theirConns] = await Promise.all([
                 Connection.find({ rootnode: user._id, status: "accepted" }),
                 Connection.find({ node: user._id, status: "accepted" }),
@@ -81,11 +78,7 @@ const getMyStoryFeed = async (req, res, next) => {
 
             userStoryFeed.set(uidStr, storyFeed);
         } else {
-            console.log(
-                "↪".bold,
-                " StoryFeed ".cyan.bold.inverse,
-                `using old feed for ${user.username}`.cyan
-            );
+            ConsoleLog.usingOldX("StoryFeed", "feed", user.username);
 
             storyFeed = userStoryFeed.get(uidStr);
         }
