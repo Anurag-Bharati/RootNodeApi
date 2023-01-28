@@ -14,6 +14,7 @@ const {
 const { Sort } = require("../utils/algorithms");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
+const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
 const storyPerPage = 5;
@@ -43,6 +44,11 @@ const getAllPublicStories = async (req, res, next) => {
             data: publicStories,
             totalPages: Math.ceil(totalPages / storyPerPage),
             currentPage: Number(page),
+            _links: {
+                post: HyperLinks.postLinks,
+                self: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -95,6 +101,11 @@ const getMyStoryFeed = async (req, res, next) => {
             data: paginatedFeed,
             totalPages: Math.ceil(count / storyPerPage),
             currentPage: Number(page),
+            _links: {
+                post: HyperLinks.postLinks,
+                self: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -142,6 +153,7 @@ const createStory = async (req, res, next) => {
             success: true,
             message: "Story created successfully!",
             data: story,
+            _links: { self: HyperLinks.storyOpsLinks(story._id) },
         });
     } catch (err) {
         next(err);
@@ -182,6 +194,7 @@ const getStoryById = async (req, res, next) => {
             success: true,
             message: "Story watched!",
             data: story,
+            _links: { self: HyperLinks.storyOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -213,7 +226,11 @@ const updateStoryById = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedStory });
+        res.json({
+            success: true,
+            data: updatedStory,
+            _links: { self: HyperLinks.storyOpsLinks(id) },
+        });
     } catch (err) {
         next(err);
     }
@@ -261,6 +278,7 @@ const getStoryLiker = async (req, res, next) => {
             data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.storyOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -294,6 +312,7 @@ const likeUnlikeStory = async (req, res, next) => {
                 success: true,
                 message: "Story liked successfully!",
                 data: { liked: true },
+                _links: { self: HyperLinks.storyOpsLinks(id) },
             });
         }
     } catch (err) {
@@ -331,6 +350,7 @@ const getStoryWatcher = async (req, res, next) => {
             data: seenBy,
             totalPages: Math.ceil(count / watcherPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.storyOpsLinks(id) },
         });
     } catch (err) {
         next(err);

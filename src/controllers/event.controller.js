@@ -9,6 +9,7 @@ const {
     IllegalArgumentException,
     ResourceNotFoundException,
 } = require("../throwable/exception.rootnode");
+const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
 const eventPerPage = 5;
@@ -36,6 +37,11 @@ const getAllPublicEvents = async (req, res, next) => {
             data: events,
             totalPages: Math.ceil(count / eventPerPage),
             currentPage: Number(page),
+            _links: {
+                post: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                self: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -53,6 +59,7 @@ const getEventById = async (req, res, next) => {
         res.json({
             success: true,
             data: event,
+            _links: { self: HyperLinks.eventOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -77,6 +84,7 @@ const getAllMyEvents = async (req, res, next) => {
             data: events,
             totalPages: Math.ceil(count / eventPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.eventLinks },
         });
     } catch (err) {
         next(err);
@@ -115,6 +123,7 @@ const addEvent = async (req, res, next) => {
             success: true,
             message: "Event created successfully!",
             data: event,
+            _links: { self: HyperLinks.eventLinks },
         });
     } catch (err) {
         next(err);
@@ -135,7 +144,13 @@ const updateEventById = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedEvent });
+        res.json({
+            success: true,
+            data: updatedEvent,
+            _links: {
+                self: HyperLinks.eventOpsLinks(id),
+            },
+        });
     } catch (err) {
         next(err);
     }
@@ -164,7 +179,10 @@ const deleteEventById = async (req, res, next) => {
         // TODO check owner
         const result = await Event.findByIdAndDelete(id);
         if (!result) throw new ResourceNotFoundException("Event not found");
-        res.json({ success: true, data: result });
+        res.json({
+            success: true,
+            data: result,
+        });
     } catch (err) {
         next(err);
     }
@@ -201,6 +219,7 @@ const joinLeaveEvent = async (req, res, next) => {
                 success: true,
                 message: "Event joined successfully!",
                 data: { joined: true },
+                _links: { self: HyperLinks.eventOpsLinks(id) },
             });
         }
     } catch (err) {
@@ -238,6 +257,7 @@ const interesedEventToggle = async (req, res, next) => {
                 success: true,
                 message: "Event marked as interested!",
                 data: { interested: true },
+                _links: { self: HyperLinks.eventOpsLinks(id) },
             });
         }
     } catch (err) {
@@ -279,6 +299,7 @@ const getEventCandidates = async (req, res, next) => {
             data: candidates,
             totalPages: Math.ceil(count / candidatePerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.eventOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -318,6 +339,7 @@ const getEventInterested = async (req, res, next) => {
             data: interested,
             totalPages: Math.ceil(count / intrestedPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.eventOpsLinks(id) },
         });
     } catch (err) {
         next(err);

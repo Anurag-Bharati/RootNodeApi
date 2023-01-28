@@ -19,6 +19,7 @@ const { Sort } = require("../utils/algorithms");
 const PostGen = require("../generator/post.gen");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
+const HyperLinks = require("../utils/_link.hyper");
 /* constraints start*/
 const postPerPage = 5;
 const commentsPerPage = 5;
@@ -49,11 +50,17 @@ const getAllPublicPost = async (req, res, next) => {
             Post.countDocuments(),
         ]);
         if (user?._id) await PostGen.generateMeta(user._id, publicFeed, meta);
+
         res.json({
             success: true,
             data: { feed: publicFeed, meta: meta },
             totalPages: Math.ceil(totalPages / postPerPage),
             currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -104,6 +111,11 @@ const getMyFeed = async (req, res, next) => {
             data: { feed: paginatedFeed, meta: meta },
             totalPages: Math.ceil(count / postPerPage),
             currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -121,6 +133,9 @@ const getPostById = async (req, res, next) => {
         res.json({
             success: true,
             data: post,
+            _links: {
+                self: HyperLinks.postOpsLinks(pid),
+            },
         });
     } catch (err) {
         next(err);
@@ -197,6 +212,7 @@ const createPost = async (req, res, next) => {
             success: true,
             message: "Post created successfully!",
             data: post,
+            _links: { self: HyperLinks.postOpsLinks(post._id) },
         });
     } catch (err) {
         next(err);
@@ -238,6 +254,7 @@ const likeUnlikePost = async (req, res, next) => {
                 success: true,
                 message: "Post liked successfully!",
                 data: { liked: true },
+                _links: { self: HyperLinks.postOpsLinks(pid) },
             });
         }
     } catch (err) {
@@ -272,6 +289,7 @@ const getPostLiker = async (req, res, next) => {
             data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -307,6 +325,7 @@ const getPostCommentLiker = async (req, res, next) => {
             data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
         });
     } catch (err) {
         next(err);
@@ -341,6 +360,10 @@ const addComment = async (req, res, next) => {
             success: true,
             message: "Comment posted!",
             data: newComment,
+            _links: {
+                self: HyperLinks.commentOpsLinks(newComment._id),
+                post: HyperLinks.postOpsLinks(pid),
+            },
         });
     } catch (err) {
         next(err);
@@ -358,6 +381,7 @@ const getCommentByID = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: comment,
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
         });
     } catch (err) {
         next(err);
@@ -378,7 +402,11 @@ const updateCommentByID = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedComment });
+        res.json({
+            success: true,
+            data: updatedComment,
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
+        });
     } catch (err) {
         next(err);
     }
@@ -423,6 +451,7 @@ const getComments = async (req, res, next) => {
             data: comments,
             totalPages: Math.ceil(count / commentsPerPage),
             currentPage: Number(page),
+            _links: { post: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -472,6 +501,7 @@ const likeUnlikeComment = async (req, res, next) => {
                 success: true,
                 message: "Comment liked successfully!",
                 data: { liked: true },
+                _links: { self: HyperLinks.commentOpsLinks(cid) },
             });
         }
     } catch (err) {
@@ -523,7 +553,11 @@ const updatePostById = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedPost });
+        res.json({
+            success: true,
+            data: updatedPost,
+            _links: { self: HyperLinks.postOpsLinks(pid) },
+        });
     } catch (err) {
         next(err);
     }

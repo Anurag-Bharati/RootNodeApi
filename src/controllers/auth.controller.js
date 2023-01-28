@@ -7,6 +7,7 @@ const {
     FieldNotMatchedException,
     IllegalArgumentException,
 } = require("../throwable/exception.rootnode");
+const HyperLinks = require("../utils/_link.hyper");
 
 const handleLogin = async (req, res, next) => {
     let now = new Date();
@@ -73,6 +74,13 @@ const handleLogin = async (req, res, next) => {
                 rootnode: user,
                 accessToken: accessToken,
             },
+            _links: {
+                user: HyperLinks.userLinks,
+                post: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+                connection: HyperLinks.connLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -118,6 +126,7 @@ const handleRegister = async (req, res, next) => {
             success: true,
             message: "User registered successfully!",
             data: { username: newUser.username, _id: newUser._id },
+            _links: { self: HyperLinks.authLinks },
         });
     } catch (err) {
         next(err);
@@ -160,6 +169,13 @@ const handleRefreshToken = async (req, res, next) => {
                     accountStatus: foundUser.status,
                     role: foundUser.role,
                     accessToken: accessToken,
+                },
+                _links: {
+                    user: HyperLinks.userLinks,
+                    post: HyperLinks.postLinks,
+                    story: HyperLinks.storyLinks,
+                    event: HyperLinks.eventLinks,
+                    connection: HyperLinks.connLinks,
                 },
             });
         }
