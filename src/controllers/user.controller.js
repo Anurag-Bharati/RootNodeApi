@@ -2,6 +2,7 @@ require("colors");
 const { isValidObjectId } = require("mongoose");
 const { User } = require("../models/models.wrapper");
 const { IllegalArgumentException } = require("../throwable/exception.rootnode");
+const HyperLinks = require("../utils/_link.hyper");
 
 const getAllUsers = (req, res, next) => {
     User.find()
@@ -12,19 +13,32 @@ const getAllUsers = (req, res, next) => {
 const getUserByID = (req, res, next) => {
     const uid = req.user._id;
     User.findById(uid)
-        .then((user) => res.json(user))
+        .then((user) =>
+            res.json({ user: user, _links: { self: HyperLinks.userOpsLink } })
+        )
         .catch(next);
 };
 
 const whoAmI = (req, res, next) => {
     const user = req.user || { username: "Anonymous-User" };
     const isAnonymous = req.user === null;
-    res.status(200).json({ user: user, isAnonymous: isAnonymous });
+    res.status(200).json({
+        user: user,
+        isAnonymous: isAnonymous,
+        _links: { self: HyperLinks.userLinks },
+    });
 };
 
 const updateUserByID = (req, res, next) => {
     User.findByIdAndUpdate(req.user._id, { $set: req.body }, { new: true })
-        .then((user) => user.save().then(res.status(200).json(user)))
+        .then((user) =>
+            user.save().then(
+                res.status(200).json({
+                    user: user,
+                    _links: { self: HyperLinks.userOpsLink },
+                })
+            )
+        )
         .catch(next);
 };
 

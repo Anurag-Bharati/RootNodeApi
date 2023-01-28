@@ -1,3 +1,5 @@
+const HyperLinks = require("../utils/_link.hyper");
+
 require("colors");
 let showCause = false;
 const init = (loggerInstance, _showCause) => {
@@ -29,6 +31,14 @@ const errorMiddleware = (err, req, res, next) => {
         success: false,
         message: err.message,
         err: err.name,
+        _links: {
+            auth: HyperLinks.authLinks,
+            user: HyperLinks.userLinks,
+            post: HyperLinks.postLinks,
+            story: HyperLinks.storyLinks,
+            event: HyperLinks.eventLinks,
+            connection: HyperLinks.connLinks,
+        },
     });
     next();
 };

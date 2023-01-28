@@ -10,6 +10,7 @@ const {
 const { Sort } = require("../utils/algorithms");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
+const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
 const connPerPage = 5;
@@ -52,6 +53,7 @@ const getAllConnections = async (req, res, next) => {
             data: connsWithoutMe,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.connLinks },
         });
     } catch (err) {
         next(err);
@@ -84,6 +86,7 @@ const getMyOldAndRecentConns = async (req, res, next) => {
                 limit: limitConstraint,
                 count: count > 6 ? count - limitConstraint * 2 : 0,
             },
+            _links: { self: HyperLinks.connLinks },
         });
     } catch (err) {
         next(err);
@@ -131,6 +134,7 @@ const getRecommendedConns = async (req, res, next) => {
             data: paginatedRecom,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.connLinks },
         });
     } catch (err) {
         next(err);
@@ -177,6 +181,7 @@ const getRandomConns = async (req, res, next) => {
             data: paginatedRecom,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.connLinks },
         });
     } catch (err) {
         next(err);
@@ -236,6 +241,7 @@ const userConnectionToggler = async (req, res, next) => {
             success: true,
             message: "Nodes linked request sent successfully",
             data: { conn: newConn, requested: true },
+            _links: { self: HyperLinks.connOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -262,6 +268,7 @@ const hasConnection = async (req, res, next) => {
                     hasLink: false,
                     status: "disconnected",
                 },
+                _links: { self: HyperLinks.connOpsLinks(id) },
             });
         const hasLink = hasConn.status == "accepted" ? true : false;
         console.log(hasConn.status);
@@ -271,6 +278,7 @@ const hasConnection = async (req, res, next) => {
                 hasLink: hasLink,
                 status: hasConn.status,
             },
+            _links: { self: HyperLinks.connOpsLinks(id) },
         });
     } catch (err) {
         next(err);
@@ -308,6 +316,7 @@ const updateConnectionById = async (req, res, next) => {
                 success: false,
                 message: "Connection request already accepted!",
                 data: { hasLink: true, linkStatus: connection.status },
+                _links: { self: HyperLinks.connOpsLinks(id) },
             });
         }
         const [rootnode, node] = await Promise.all([
@@ -328,6 +337,7 @@ const updateConnectionById = async (req, res, next) => {
                 hasLink: hasLink,
                 linkStatus: connection.status,
             },
+            _links: { self: HyperLinks.connOpsLinks(id) },
         });
     } catch (err) {
         next(err);

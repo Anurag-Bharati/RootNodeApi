@@ -72,265 +72,352 @@ Routes.SEENBY = ID_PARAM + SEENBY;
 
 /*  AUTH  */
 SpecificRoutes.LOGIN = {
-    PATH: `${ROOT}${AUTH}${LOGIN}`,
-    METHOD: "POST",
-    PROTECTED: false,
+    path: `${ROOT}${AUTH}${LOGIN}`,
+    method: "POST",
+    protected: false,
 };
 SpecificRoutes.REGISTER = {
-    PATH: `${ROOT}${AUTH}${REGISTER}`,
-    METHOD: "POST",
-    PROTECTED: false,
+    path: `${ROOT}${AUTH}${REGISTER}`,
+    method: "POST",
+    protected: false,
 };
 SpecificRoutes.REFRESH = {
-    PATH: `${ROOT}${AUTH}${REFRESH}`,
-    METHOD: "GET",
-    PROTECTED: true,
+    path: `${ROOT}${AUTH}${REFRESH}`,
+    method: "GET",
+    protected: true,
 };
 SpecificRoutes.LOGOUT = {
-    PATH: `${ROOT}${AUTH}${LOGOUT}`,
-    METHOD: "POST",
-    PROTECTED: false,
+    path: `${ROOT}${AUTH}${LOGOUT}`,
+    method: "POST",
+    protected: false,
 };
 
 /* USER  */
 
 SpecificRoutes.GET_ALL_USER = {
-    PATH: `${ROOT}${USER}`,
-    METHOD: "GET",
-    PROTECTED: false,
+    path: `${ROOT}${USER}`,
+    method: "GET",
+    protected: false,
 };
 SpecificRoutes.WHOAMI = {
-    PATH: `${ROOT}${USER}${WHOAMI}`,
-    METHOD: "GET",
-    PROTECTED: false,
+    path: `${ROOT}${USER}${WHOAMI}`,
+    method: "GET",
+    protected: false,
+};
+SpecificRoutes.CHECK_USERNAME_UNIQUE = {
+    path: `${ROOT}${USER}${ISUNIQUE}`,
+    method: "GET",
+    protected: false,
+    params: ["username"],
 };
 SpecificRoutes.GET_USER = {
-    PATH: `${ROOT}${USER}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+    path: `${ROOT}${USER}`,
+    method: "GET",
+    protected: true,
 };
 SpecificRoutes.UPDATE_USER = {
-    PATH: `${ROOT}${USER}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+    path: `${ROOT}${USER}`,
+    method: "PUT",
+    protected: true,
 };
 
 /*  POST  */
 
 SpecificRoutes.GET_PUBLIC_POST = {
-    PATH: `${ROOT}${POST}`,
-    METHOD: "GET",
-    PROTECTED: false,
+    path: `${ROOT}${POST}`,
+    method: "GET",
+    protected: false,
+};
+SpecificRoutes.GET_POST_FEED = {
+    path: `${ROOT}${POST}${FEED}`,
+    method: "GET",
+    protected: true,
 };
 SpecificRoutes.CREATE_POST = {
-    PATH: `${ROOT}${POST}`,
-    METHOD: "POST",
-    PROTECTED: true,
+    path: `${ROOT}${POST}`,
+    method: "POST",
+    protected: true,
 };
 SpecificRoutes.DELETE_ALL_POST = {
-    PATH: `${ROOT}${POST}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+    path: `${ROOT}${POST}`,
+    method: "DELETE",
+    protected: true,
 };
 
 /* ==================================== */
 
-SpecificRoutes.GET_POST = {
-    PATH: `${ROOT}${POST}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_POST = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.UPDATE_POST = {
-    PATH: `${ROOT}${POST}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+SpecificRoutes.UPDATE_POST = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}`,
+        method: "PUT",
+        protected: true,
+    };
 };
-SpecificRoutes.DELETE_POST = {
-    PATH: `${ROOT}${POST}${ID_PARAM}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
-};
-
-/* ==================================== */
-
-SpecificRoutes.TOGGLE_POST_LIKE = {
-    PATH: `${ROOT}${POST}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "POST",
-    PROTECTED: true,
-};
-SpecificRoutes.GET_POST_LIKERS = {
-    PATH: `${ROOT}${POST}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "GET",
-    PROTECTED: true,
-};
-SpecificRoutes.GET_POST_COMMENTS = {
-    PATH: `${ROOT}${POST}${ID_PARAM}${CMNT}`,
-    METHOD: "GET",
-    PROTECTED: true,
-};
-SpecificRoutes.CREATE_CMNT = {
-    PATH: `${ROOT}${POST}${ID_PARAM}${CMNT}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.DELETE_POST = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}`,
+        method: "DELETE",
+        protected: true,
+    };
 };
 
 /* ==================================== */
 
-SpecificRoutes.GET_COMMENT = {
-    PATH: `${ROOT}${POST}${CMNT}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.TOGGLE_POST_LIKE = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}${OPS_LIKE}`,
+        method: "POST",
+        protected: true,
+    };
 };
-SpecificRoutes.UPDATE_CMNT = {
-    PATH: `${ROOT}${POST}${CMNT}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+SpecificRoutes.GET_POST_LIKERS = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}${OPS_LIKE}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.DELETE_CMNT = {
-    PATH: `${ROOT}${POST}${CMNT}${ID_PARAM}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+SpecificRoutes.GET_POST_COMMENTS = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}${CMNT}`,
+        method: "GET",
+        protected: true,
+    };
+};
+SpecificRoutes.CREATE_CMNT = (id) => {
+    return {
+        path: `${ROOT}${POST}${id}${CMNT}`,
+        method: "POST",
+        protected: true,
+    };
 };
 
 /* ==================================== */
 
-SpecificRoutes.TOGGLE_CMNT_LIKE = {
-    PATH: `${ROOT}${POST}${CMNT}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.GET_COMMENT = (id) => {
+    return {
+        path: `${ROOT}${POST}${CMNT}${id}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.GET_CMNT_LIKERS = {
-    PATH: `${ROOT}${POST}${CMNT}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.UPDATE_CMNT = (id) => {
+    return {
+        path: `${ROOT}${POST}${CMNT}${id}`,
+        method: "PUT",
+        protected: true,
+    };
+};
+SpecificRoutes.DELETE_CMNT = (id) => {
+    return {
+        path: `${ROOT}${POST}${CMNT}${id}`,
+        method: "DELETE",
+        protected: true,
+    };
+};
+
+/* ==================================== */
+
+SpecificRoutes.TOGGLE_CMNT_LIKE = (id) => {
+    return {
+        path: `${ROOT}${POST}${CMNT}${id}${OPS_LIKE}`,
+        method: "POST",
+        protected: true,
+    };
+};
+SpecificRoutes.GET_CMNT_LIKERS = (id) => {
+    return {
+        path: `${ROOT}${POST}${CMNT}${id}${OPS_LIKE}`,
+        method: "GET",
+        protected: true,
+    };
 };
 
 /* CONN */
 
 SpecificRoutes.GET_MY_CONN = {
-    PATH: `${ROOT}${CONN}`,
-    METHOD: "GET",
-    PROTECTED: true,
+    path: `${ROOT}${CONN}`,
+    method: "GET",
+    protected: true,
 };
-SpecificRoutes.CHECK_IF_IM_CONN = {
-    PATH: `${ROOT}${CONN}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.OLD_RECENT_CONNS = {
+    path: `${ROOT}${CONN}${OLD_RECENT_CONNS}`,
+    method: "GET",
+    protected: true,
 };
-SpecificRoutes.SEND_CONN_REQ = {
-    PATH: `${ROOT}${CONN}${ID_PARAM}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.RECOM = {
+    path: `${ROOT}${CONN}${RECOM}`,
+    method: "GET",
+    protected: true,
 };
-SpecificRoutes.UPDATE_CONN_STATUS = {
-    PATH: `${ROOT}${CONN}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+SpecificRoutes.RANDOM = {
+    path: `${ROOT}${CONN}${RANDOM}`,
+    method: "GET",
+    protected: true,
+};
+SpecificRoutes.CHECK_IF_IM_CONN = (id) => {
+    return {
+        path: `${ROOT}${CONN}${id}`,
+        method: "GET",
+        protected: true,
+    };
+};
+SpecificRoutes.TOGGLE_CONNECTION_REQ = (id) => {
+    return {
+        path: `${ROOT}${CONN}${id}`,
+        method: "POST",
+        protected: true,
+    };
+};
+SpecificRoutes.UPDATE_CONN_STATUS = (id) => {
+    return {
+        path: `${ROOT}${CONN}${id}`,
+        method: "PUT",
+        protected: true,
+    };
 };
 
 /* STORY */
 
 SpecificRoutes.GET_PUBLIC_STORIES = {
-    PATH: `${ROOT}${STRY}`,
-    METHOD: "GET",
-    PROTECTED: false,
+    path: `${ROOT}${STRY}`,
+    method: "GET",
+    protected: false,
+};
+SpecificRoutes.GET_STORY_FEED = {
+    path: `${ROOT}${STRY}${FEED}`,
+    method: "GET",
+    protected: true,
 };
 SpecificRoutes.CREATE_STORY = {
-    PATH: `${ROOT}${STRY}`,
-    METHOD: "POST",
-    PROTECTED: true,
+    path: `${ROOT}${STRY}`,
+    method: "POST",
+    protected: true,
 };
 SpecificRoutes.DELETE_ALL_STORIES = {
-    PATH: `${ROOT}${STRY}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+    path: `${ROOT}${STRY}`,
+    method: "DELETE",
+    protected: true,
 };
-SpecificRoutes.GET_STORY = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_STORY = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.UPDATE_STORY = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+SpecificRoutes.UPDATE_STORY = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}`,
+        method: "PUT",
+        protected: true,
+    };
 };
-SpecificRoutes.DELETE_STORY = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+SpecificRoutes.DELETE_STORY = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}`,
+        method: "DELETE",
+        protected: true,
+    };
 };
-SpecificRoutes.GET_STORY_LIKERS = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_STORY_LIKERS = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}${OPS_LIKE}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.TOGGLE_STORY_LIKE = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}${OPS_LIKE}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.TOGGLE_STORY_LIKE = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}${OPS_LIKE}`,
+        method: "POST",
+        protected: true,
+    };
 };
-SpecificRoutes.GET_STORY_WATCHERS = {
-    PATH: `${ROOT}${STRY}${ID_PARAM}${SEENBY}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_STORY_WATCHERS = (id) => {
+    return {
+        path: `${ROOT}${STRY}${id}${SEENBY}`,
+        method: "GET",
+        protected: true,
+    };
 };
 
 /* EVENT */
 SpecificRoutes.GET_PUBLIC_EVENTS = {
-    PATH: `${ROOT}${EVNT}`,
-    METHOD: "GET",
-    PROTECTED: true,
+    path: `${ROOT}${EVNT}`,
+    method: "GET",
+    protected: true,
 };
 SpecificRoutes.CREATE_EVENT = {
-    PATH: `${ROOT}${EVNT}`,
-    METHOD: "POST",
-    PROTECTED: true,
+    path: `${ROOT}${EVNT}`,
+    method: "POST",
+    protected: true,
 };
 SpecificRoutes.DELETE_ALL_EVENTS = {
-    PATH: `${ROOT}${EVNT}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+    path: `${ROOT}${EVNT}`,
+    method: "DELETE",
+    protected: true,
 };
 SpecificRoutes.GET_MY_EVENTS = {
-    PATH: `${ROOT}${EVNT}${MY}`,
-    METHOD: "GET",
-    PROTECTED: true,
+    path: `${ROOT}${EVNT}${MY}`,
+    method: "GET",
+    protected: true,
 };
-SpecificRoutes.GET_EVENT = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_EVENT = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.UPDATE_EVENT = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}`,
-    METHOD: "PUT",
-    PROTECTED: true,
+SpecificRoutes.UPDATE_EVENT = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}`,
+        method: "PUT",
+        protected: true,
+    };
 };
-SpecificRoutes.DELETE_EVENT = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}`,
-    METHOD: "DELETE",
-    PROTECTED: true,
+SpecificRoutes.DELETE_EVENT = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}`,
+        method: "DELETE",
+        protected: true,
+    };
 };
-SpecificRoutes.GET_EVENT_CANDIDATES = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}${OPS_JOIN}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_EVENT_CANDIDATES = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}${OPS_JOIN}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.JOIN_LEAVE_EVENT = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}${OPS_JOIN}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.JOIN_LEAVE_EVENT = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}${OPS_JOIN}`,
+        method: "POST",
+        protected: true,
+    };
 };
-SpecificRoutes.GET_EVENT_INTERESTED = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}${OPS_INTERESTED}`,
-    METHOD: "GET",
-    PROTECTED: true,
+SpecificRoutes.GET_EVENT_INTERESTED = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}${OPS_INTERESTED}`,
+        method: "GET",
+        protected: true,
+    };
 };
-SpecificRoutes.TOGGLE_EVENT_INTERESTED = {
-    PATH: `${ROOT}${EVNT}${ID_PARAM}${OPS_INTERESTED}`,
-    METHOD: "POST",
-    PROTECTED: true,
+SpecificRoutes.TOGGLE_EVENT_INTERESTED = (id) => {
+    return {
+        path: `${ROOT}${EVNT}${id}${OPS_INTERESTED}`,
+        method: "POST",
+        protected: true,
+    };
 };
 
 module.exports = { BaseRoutes, Routes, SpecificRoutes };
