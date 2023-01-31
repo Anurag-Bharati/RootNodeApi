@@ -16,7 +16,7 @@ const storySchema = new Schema(
 
         quote: {
             type: String,
-            maxlength: 500,
+            maxlength: 5000,
             trim: true,
         },
         color: { type: Number, default: 0xff00bcd4 },

@@ -49,7 +49,7 @@ const userSchema = new Schema(
             select: false,
         },
 
-        avatar: { type: String, default: null },
+        avatar: { type: String, default: "public/anonymous.jpg" },
 
         postsCount: {
             type: Number,

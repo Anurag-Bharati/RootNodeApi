@@ -17,14 +17,14 @@ const generateConnOverview = async (uid, constraints) => {
             $or: [{ rootnode: uid }, { node: uid }],
             status: "accepted",
         })
-            .sort({ createdAt: 1 })
+            .sort("-createdAt")
             .limit(limit)
             .populate("rootnode node", EntityFieldsFilter.USER),
         Connection.find({
             $or: [{ rootnode: uid }, { node: uid }],
             status: "accepted",
         })
-            .sort({ createdAt: -1 })
+            .sort("createdAt")
             .limit(limit)
             .populate("rootnode node", EntityFieldsFilter.USER),
         ,

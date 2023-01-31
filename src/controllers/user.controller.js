@@ -10,9 +10,18 @@ const getAllUsers = (req, res, next) => {
         .catch(next);
 };
 
-const getUserByID = (req, res, next) => {
+const getLoggedInUser = (req, res, next) => {
     const uid = req.user._id;
     User.findById(uid)
+        .then((user) =>
+            res.json({ user: user, _links: { self: HyperLinks.userOpsLink } })
+        )
+        .catch(next);
+};
+
+const getUserByID = (req, res, next) => {
+    const { id } = req.params;
+    User.findById(id)
         .then((user) =>
             res.json({ user: user, _links: { self: HyperLinks.userOpsLink } })
         )
@@ -58,6 +67,7 @@ const isUsernameUnique = async (req, res, next) => {
 module.exports = {
     whoAmI,
     getAllUsers,
+    getLoggedInUser,
     getUserByID,
     updateUserByID,
     isUsernameUnique,

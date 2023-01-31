@@ -239,7 +239,7 @@ const userConnectionToggler = async (req, res, next) => {
         ]);
         res.json({
             success: true,
-            message: "Nodes linked request sent successfully",
+            message: "Node link request sent successfully",
             data: { conn: newConn, requested: true },
             _links: { self: HyperLinks.connOpsLinks(id) },
         });

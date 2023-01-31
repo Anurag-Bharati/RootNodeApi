@@ -17,7 +17,7 @@ const ConsoleLog = require("../utils/log.console");
 const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
-const storyPerPage = 5;
+const storyPerPage = 10;
 const likerPerPage = 10;
 const watcherPerPage = 10;
 /* constraints end*/
@@ -27,8 +27,10 @@ const userStoryFeed = new Map();
 /* runtime end */
 
 const getAllPublicStories = async (req, res, next) => {
-    let page = req.query.page || 1;
+    let { refresh, page } = req.query;
+    page = req.query.page || 1;
     page = page > 0 ? page : 1;
+    page = refresh == 1 ? 1 : page;
     try {
         const [publicStories, totalPages] = await Promise.all([
             Story.find({ visibility: "public" })
@@ -39,9 +41,55 @@ const getAllPublicStories = async (req, res, next) => {
                 .exec(),
             Story.countDocuments({ visibility: "public" }),
         ]);
+        const watched = publicStories.filter((story) =>
+            story.seenBy.includes(req.user._id)
+        );
+        const notWatched = publicStories.filter(
+            (story) => !story.seenBy.includes(req.user._id)
+        );
+        const sorted = [...notWatched, ...watched];
         res.json({
             success: true,
-            data: publicStories,
+            data: sorted,
+            totalPages: Math.ceil(totalPages / storyPerPage),
+            currentPage: Number(page),
+            _links: {
+                post: HyperLinks.postLinks,
+                self: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getStoryByUser = async (req, res, next) => {
+    const id = req.params.id;
+    let { refresh, page } = req.query;
+    page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+    page = refresh == 1 ? 1 : page;
+    try {
+        const [publicStories, totalPages] = await Promise.all([
+            Story.find({ visibility: "public", owner: id })
+                .populate("owner", EntityFieldsFilter.USER)
+                .sort("-createdAt")
+                .limit(storyPerPage)
+                .skip((page - 1) * storyPerPage)
+                .exec(),
+            Story.countDocuments({ visibility: "public" }),
+        ]);
+        const watched = publicStories.filter((story) =>
+            story.seenBy.includes(req.user._id)
+        );
+        const notWatched = publicStories.filter(
+            (story) => !story.seenBy.includes(req.user._id)
+        );
+        const sorted = [...notWatched, ...watched];
+        res.json({
+            success: true,
+            data: sorted,
             totalPages: Math.ceil(totalPages / storyPerPage),
             currentPage: Number(page),
             _links: {
@@ -113,7 +161,7 @@ const getMyStoryFeed = async (req, res, next) => {
 };
 
 const createStory = async (req, res, next) => {
-    const { quote, visibility, likeable } = req.body;
+    const { quote, visibility, likeable, color } = req.body;
     const media = req.file;
     const hasMedia = media !== null && media !== undefined;
     const uid = req.user._id;
@@ -138,6 +186,7 @@ const createStory = async (req, res, next) => {
             type: type,
             owner: uid,
             quote: quote,
+            color: color,
             media: cleanedMedia,
             visibility: visibility,
             likeable: likeable,
@@ -387,6 +436,7 @@ const getStoryWatcher = async (req, res, next) => {
 module.exports = {
     getAllPublicStories,
     getMyStoryFeed,
+    getStoryByUser,
     createStory,
     deleteAllStories,
     getStoryById,

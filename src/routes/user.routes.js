@@ -17,7 +17,8 @@ router.route("/all").get(controller.getAllUsers).all(utils.notImplemented);
 router
     .use(auth.verifyUser)
     .route(Routes.BASE)
-    .get(controller.getUserByID)
+    .get(controller.getLoggedInUser)
     .put(controller.updateUserByID);
 
+router.route(Routes.ID_PARAM).get(controller.getUserByID);
 module.exports = router;

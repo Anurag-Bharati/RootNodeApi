@@ -18,6 +18,12 @@ const postSchema = new Schema(
             required: true,
         },
 
+        heading: {
+            type: String,
+            maxlength: 128,
+            trim: true,
+        },
+
         caption: {
             type: String,
             maxlength: 512,
