@@ -30,8 +30,7 @@ const getAllConnections = async (req, res, next) => {
     const rootnode = req.user;
     try {
         const connsPromise = Connection.find({
-            $or: [{ rootnode: rootnode._id }, { node: rootnode._id }],
-            status: "accepted",
+            rootnode: rootnode._id,
         })
             .populate("rootnode node", EntityFieldsFilter.USER)
             .sort("-createdAt")
@@ -39,15 +38,13 @@ const getAllConnections = async (req, res, next) => {
             .skip((page - 1) * connPerPage)
             .exec();
         const countPromise = Connection.countDocuments({
-            $or: [{ rootnode: rootnode._id }, { node: rootnode._id }],
-            status: "accepted",
+            rootnode: rootnode._id,
         });
         const [conns, count] = await Promise.all([connsPromise, countPromise]);
-        const connsWithoutMe = conns.map((conn) =>
-            conn.rootnode.equals(rootnode._id)
-                ? { user: conn.node, date: conn.createdAt }
-                : { user: conn.rootnode, date: conn.createdAt }
-        );
+        const connsWithoutMe = conns.map((conn) => {
+            x = { user: conn.node, date: conn.createdAt };
+            return x;
+        });
         res.json({
             success: true,
             data: connsWithoutMe,
@@ -67,16 +64,14 @@ const getMyOldAndRecentConns = async (req, res, next) => {
             user._id,
             { limit: limitConstraint }
         );
-        old = old.map((conn) =>
-            conn.rootnode.equals(user._id)
-                ? { user: conn.node, date: conn.createdAt }
-                : { user: conn.rootnode, date: conn.createdAt }
-        );
-        recent = recent.map((conn) =>
-            conn.rootnode.equals(user._id)
-                ? { user: conn.node, date: conn.createdAt }
-                : { user: conn.rootnode, date: conn.createdAt }
-        );
+        old = old.map((conn) => {
+            x = { user: conn.node, date: conn.createdAt };
+            return x;
+        });
+        recent = recent.map((conn) => {
+            x = { user: conn.node, date: conn.createdAt };
+            return x;
+        });
         res.json({
             success: true,
             message: "Successfully generated old and recent conns",
@@ -204,17 +199,12 @@ const userConnectionToggler = async (req, res, next) => {
         if (user.equals(nodeToConn))
             throw new IllegalOperationException("Cannot connect to self");
         const isConnected = await Connection.findOne({
-            $or: [
-                { rootnode: rootnode._id, node: nodeToConn },
-                { rootnode: nodeToConn, node: rootnode._id },
-            ],
+            rootnode: rootnode._id,
+            node: nodeToConn,
         });
 
         if (isConnected) {
-            let msg;
-            if (isConnected.status == "pending")
-                msg = "Removed link-request successfully";
-            else msg = "Node unlinked successfully";
+            const msg = "Node unlinked successfully";
             if (user.nodesCount > 0) user.nodesCount--;
             if (nodeToConn.nodesCount > 0) nodeToConn.nodesCount--;
             await Promise.all([
@@ -226,21 +216,23 @@ const userConnectionToggler = async (req, res, next) => {
             return res.json({
                 success: true,
                 message: msg,
-                data: { conn: isConnected, requested: false },
+                hasLink: false,
             });
         }
         const newConnPromise = Connection.create({
             rootnode: rootnode._id,
             node: nodeToConn,
         });
-        const [newConn, updatedRoot] = await Promise.all([
-            newConnPromise,
-            user.save(),
-        ]);
+
+        rootnode.connCount++;
+        nodeToConn.nodesCount++;
+
+        await Promise.all([newConnPromise, user.save(), nodeToConn.save()]);
+
         res.json({
             success: true,
-            message: "Node link request sent successfully",
-            data: { conn: newConn, requested: true },
+            message: "Node linked successfully",
+            hasLink: true,
             _links: { self: HyperLinks.connOpsLinks(id) },
         });
     } catch (err) {
@@ -264,20 +256,12 @@ const hasConnection = async (req, res, next) => {
         if (!hasConn)
             return res.json({
                 success: true,
-                data: {
-                    hasLink: false,
-                    status: "disconnected",
-                },
+                hasLink: false,
                 _links: { self: HyperLinks.connOpsLinks(id) },
             });
-        const hasLink = hasConn.status == "accepted" ? true : false;
-        console.log(hasConn.status);
         return res.json({
             success: true,
-            data: {
-                hasLink: hasLink,
-                status: hasConn.status,
-            },
+            hasLink: true,
             _links: { self: HyperLinks.connOpsLinks(id) },
         });
     } catch (err) {
@@ -285,6 +269,7 @@ const hasConnection = async (req, res, next) => {
     }
 };
 
+// depreciated route
 const updateConnectionById = async (req, res, next) => {
     const id = req.params.id;
     const uid = req.user._id;

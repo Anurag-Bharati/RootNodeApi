@@ -60,7 +60,12 @@ const userSchema = new Schema(
             type: Number,
             default: 0,
         },
-
+        // following
+        connCount: {
+            type: Number,
+            default: 0,
+        },
+        //followers
         nodesCount: {
             type: Number,
             default: 0,

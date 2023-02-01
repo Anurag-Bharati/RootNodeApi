@@ -7,22 +7,19 @@ const generateConnOverview = async (uid, constraints) => {
     let { limit } = constraints;
     limit = limit > 0 ? limit : 3;
     const count = await Connection.find({
-        $or: [{ rootnode: uid }, { node: uid }],
-        status: "accepted",
+        rootnode: uid,
     }).countDocuments();
 
     if (count == 0) return [[], [], 0];
     const [old, recent] = await Promise.all([
         Connection.find({
-            $or: [{ rootnode: uid }, { node: uid }],
-            status: "accepted",
+            rootnode: uid,
         })
             .sort("-createdAt")
             .limit(limit)
             .populate("rootnode node", EntityFieldsFilter.USER),
         Connection.find({
-            $or: [{ rootnode: uid }, { node: uid }],
-            status: "accepted",
+            rootnode: uid,
         })
             .sort("createdAt")
             .limit(limit)
@@ -36,26 +33,17 @@ const generateRecommendedConns = async (uid, recom, constraints) => {
     let { limit } = constraints;
     limit = limit > 0 ? limit : 10;
     const myConns = await Connection.find({
-        $or: [{ rootnode: uid }, { node: uid }],
-        status: "accepted",
+        rootnode: uid,
     });
-    connsWithOutMe = myConns.map((conn) =>
-        conn.rootnode.equals(uid) ? conn.node : conn.rootnode
-    );
+    connsWithOutMe = myConns.map((conn) => conn.node);
     await Promise.all(
         connsWithOutMe.map(async (user) => {
             const itsConns = await Connection.find({
-                $or: [{ rootnode: user }, { node: user }],
-                status: "accepted",
+                rootnode: user,
             })
                 .limit(limit)
                 .populate("rootnode node", EntityFieldsFilter.USER);
-            connsWithOutHim = itsConns.map((conn) => {
-                const x = conn.rootnode.equals(user)
-                    ? conn.node
-                    : conn.rootnode;
-                return x.equals(uid) ? null : x;
-            });
+            connsWithOutHim = itsConns.map((conn) => conn.node);
 
             connsWithOutHim.forEach((conn) => {
                 if (conn) recom.push(conn);
@@ -71,10 +59,7 @@ const generateRandomConns = async (uid, randcom, constraints) => {
     await Promise.all(
         all.map(async (user) => {
             hasConn = await Connection.exists({
-                $or: [
-                    { $and: [{ rootnode: uid }, { node: user }] },
-                    { $and: [{ node: uid }, { rootnode: user }] },
-                ],
+                $and: [{ rootnode: uid }, { node: user }],
             });
             if (!hasConn) {
                 if (!user._id.equals(uid)) randcom.push(user);
