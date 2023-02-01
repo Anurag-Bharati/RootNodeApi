@@ -9,24 +9,23 @@ const generateConnOverview = async (uid, constraints) => {
     const count = await Connection.find({
         rootnode: uid,
     }).countDocuments();
-
     if (count == 0) return [[], [], 0];
     const [old, recent] = await Promise.all([
         Connection.find({
             rootnode: uid,
         })
-            .sort("-createdAt")
+            .sort("createdAt")
             .limit(limit)
-            .populate("rootnode node", EntityFieldsFilter.USER),
+            .populate("node", EntityFieldsFilter.USER),
         Connection.find({
             rootnode: uid,
         })
-            .sort("createdAt")
+            .sort("-createdAt")
             .limit(limit)
-            .populate("rootnode node", EntityFieldsFilter.USER),
+            .populate("node", EntityFieldsFilter.USER),
         ,
     ]);
-    return [old, recent, count];
+    return [old, recent.reverse(), count];
 };
 
 const generateRecommendedConns = async (uid, recom, constraints) => {
@@ -46,7 +45,7 @@ const generateRecommendedConns = async (uid, recom, constraints) => {
             connsWithOutHim = itsConns.map((conn) => conn.node);
 
             connsWithOutHim.forEach((conn) => {
-                if (conn) recom.push(conn);
+                if (conn && !conn._id.equals(uid)) recom.push(conn);
             });
         })
     );

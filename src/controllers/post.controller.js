@@ -84,13 +84,8 @@ const getMyFeed = async (req, res, next) => {
         if (refresh === true) userFeed.delete(uidStr);
         if (!userFeed.has(uidStr)) {
             ConsoleLog.genNewX("PostFeed", "feed", user.username);
-            const [myConns, theirConns] = await Promise.all([
-                Connection.find({ rootnode: user._id, status: "accepted" }),
-                Connection.find({ node: user._id, status: "accepted" }),
-            ]);
-
+            const myConns = await Connection.find({ rootnode: user._id });
             myConns.map((conn) => conns.push(conn.node));
-            theirConns.map((conn) => conns.push(conn.rootnode));
             await PostGen.generateFeed(user._id, conns, feed);
             feed.sort(Sort.dynamicSort("-createdAt"));
             userFeed.set(uidStr, feed);

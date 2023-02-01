@@ -13,7 +13,7 @@ const ConsoleLog = require("../utils/log.console");
 const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
-const connPerPage = 5;
+const connPerPage = 10;
 const limitConstraint = 3;
 const recomConstraint = 10;
 const connStatusEnum = ["accepted", "rejected", "pending"];
@@ -32,7 +32,7 @@ const getAllConnections = async (req, res, next) => {
         const connsPromise = Connection.find({
             rootnode: rootnode._id,
         })
-            .populate("rootnode node", EntityFieldsFilter.USER)
+            .populate("node", EntityFieldsFilter.USER)
             .sort("-createdAt")
             .limit(connPerPage)
             .skip((page - 1) * connPerPage)
@@ -41,13 +41,10 @@ const getAllConnections = async (req, res, next) => {
             rootnode: rootnode._id,
         });
         const [conns, count] = await Promise.all([connsPromise, countPromise]);
-        const connsWithoutMe = conns.map((conn) => {
-            x = { user: conn.node, date: conn.createdAt };
-            return x;
-        });
+
         res.json({
             success: true,
-            data: connsWithoutMe,
+            data: conns,
             totalPages: Math.ceil(count / connPerPage),
             currentPage: Number(page),
             _links: { self: HyperLinks.connLinks },
@@ -204,8 +201,7 @@ const userConnectionToggler = async (req, res, next) => {
         });
 
         if (isConnected) {
-            const msg = "Node unlinked successfully";
-            if (user.nodesCount > 0) user.nodesCount--;
+            if (user.connsCount > 0) user.connsCount--;
             if (nodeToConn.nodesCount > 0) nodeToConn.nodesCount--;
             await Promise.all([
                 isConnected.remove(),
@@ -215,7 +211,7 @@ const userConnectionToggler = async (req, res, next) => {
 
             return res.json({
                 success: true,
-                message: msg,
+                message: "Node unlinked successfully",
                 hasLink: false,
             });
         }
@@ -224,7 +220,7 @@ const userConnectionToggler = async (req, res, next) => {
             node: nodeToConn,
         });
 
-        rootnode.connCount++;
+        user.connsCount++;
         nodeToConn.nodesCount++;
 
         await Promise.all([newConnPromise, user.save(), nodeToConn.save()]);

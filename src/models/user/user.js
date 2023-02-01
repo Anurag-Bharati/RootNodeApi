@@ -61,7 +61,7 @@ const userSchema = new Schema(
             default: 0,
         },
         // following
-        connCount: {
+        connsCount: {
             type: Number,
             default: 0,
         },
