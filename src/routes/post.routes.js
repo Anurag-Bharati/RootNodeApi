@@ -13,6 +13,12 @@ router
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllPost);
 
+router
+    .use(auth.verifyUser)
+    .route("/user/:id")
+    .get(controller.getPostByUser)
+    .all(utils.notImplemented);
+
 router.use(auth.verifyUser).route("/feed").get(controller.getMyFeed);
 
 router

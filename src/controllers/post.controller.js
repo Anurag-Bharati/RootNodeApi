@@ -66,6 +66,54 @@ const getAllPublicPost = async (req, res, next) => {
         next(err);
     }
 };
+const getPostByUser = async (req, res, next) => {
+    const user = req.user;
+    const id = req.params.id;
+
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
+
+    try {
+        if (!id) throw new IllegalArgumentException("Missing user id");
+        all =
+            user._id.equals(id) ||
+            Connection.exists({ rootnode: user._id, node: id });
+        const [posts, totalPosts] = await Promise.all([
+            // execute query with page and limit values
+            Post.find({
+                visibility: all ? ["public", "mutual"] : "public",
+                owner: id,
+            })
+                .populate("owner", EntityFieldsFilter.USER)
+                .sort("-createdAt")
+                .limit(postPerPage)
+                .skip((page - 1) * postPerPage)
+                .exec(),
+            // get total documents in the Posts collection
+            Post.countDocuments({
+                visibility: all ? "public" : "public",
+            }),
+        ]);
+        if (user?._id) await PostGen.generateMeta(user._id, posts, meta);
+        else meta.isLiked = new Array(totalPosts).fill(false);
+        res.json({
+            success: true,
+            data: { feed: posts, meta: meta },
+            totalPages: Math.ceil(totalPosts / postPerPage),
+            currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
 
 const getMyFeed = async (req, res, next) => {
     let { page, refresh } = req.query;
@@ -591,6 +639,7 @@ module.exports = {
     getAllPublicPost,
     getMyFeed,
     getPostById,
+    getPostByUser,
     createPost,
     updatePostById,
     deletePostById,
