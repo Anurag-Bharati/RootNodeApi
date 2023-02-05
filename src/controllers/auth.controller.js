@@ -24,9 +24,7 @@ const handleLogin = async (req, res, next) => {
             User.findOne({ username: username }),
             User.findOne({ email: email }),
         ]);
-
         user = ubn ? ubn : ube;
-
         if (!user) {
             let err;
             if (!ubn) err = `User with username '${username}' does not exists`;

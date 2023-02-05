@@ -25,7 +25,7 @@ const userConnRand = new Map();
 /* runtime end */
 
 const getAllConnections = async (req, res, next) => {
-    let { page } = req.params;
+    let { page } = req.query;
     page = page > 0 ? page : 1;
     const rootnode = req.user;
     try {
@@ -86,7 +86,7 @@ const getMyOldAndRecentConns = async (req, res, next) => {
 };
 
 const getRecommendedConns = async (req, res, next) => {
-    let { page, refresh } = req.params;
+    let { page, refresh } = req.query;
     refresh = refresh == 1 ? true : false;
     page = page > 0 ? page : 1;
     const user = req.user;
@@ -134,7 +134,7 @@ const getRecommendedConns = async (req, res, next) => {
 };
 
 const getRandomConns = async (req, res, next) => {
-    let { page, refresh } = req.params;
+    let { page, refresh } = req.query;
     refresh = refresh == 1 ? true : false;
     page = page > 0 ? page : 1;
     const user = req.user;

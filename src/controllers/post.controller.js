@@ -17,6 +17,7 @@ const {
 const { isValidObjectId } = require("mongoose");
 const { Sort } = require("../utils/algorithms");
 const PostGen = require("../generator/post.gen");
+const CmntGen = require("../generator/cmnt.gen");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
 const HyperLinks = require("../utils/_link.hyper");
@@ -171,14 +172,12 @@ const getPostById = async (req, res, next) => {
         if (!pid) throw new IllegalArgumentException("Missing post id");
         if (!isValidObjectId(pid))
             throw new IllegalArgumentException("Invalid post id");
-        const post = await Post.findById(pid);
+        const post = await Post.findById(pid).populate("owner");
         if (!post) throw new ResourceNotFoundException("Post not found");
         res.json({
             success: true,
             data: post,
-            _links: {
-                self: HyperLinks.postOpsLinks(pid),
-            },
+            _links: { self: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -377,6 +376,7 @@ const getPostCommentLiker = async (req, res, next) => {
 const addComment = async (req, res, next) => {
     const pid = req.params.id;
     const cmt = req.body.comment;
+    console.log(req.body);
     try {
         if (!pid) throw new IllegalArgumentException("Missing post Id");
         if (!cmt) throw new IllegalArgumentException("Missing comment field");
@@ -398,10 +398,15 @@ const addComment = async (req, res, next) => {
             post.save(),
         ]);
 
-        res.json({
+        const processedComment = await newComment.populate(
+            "user",
+            EntityFieldsFilter.USER
+        );
+
+        res.status(201).json({
             success: true,
             message: "Comment posted!",
-            data: newComment,
+            data: processedComment,
             _links: {
                 self: HyperLinks.commentOpsLinks(newComment._id),
                 post: HyperLinks.postOpsLinks(pid),
@@ -463,6 +468,9 @@ const deleteCommentById = async (req, res, next) => {
         // TODO check owner
         const result = await PostComment.findByIdAndDelete(cid);
         if (!result) throw new ResourceNotFoundException("Comment not found");
+        const post = await Post.findById(result.post);
+        post.commentsCount > 0 ? post.commentsCount-- : null;
+        await post.save();
         res.json({ success: true, data: result });
     } catch (err) {
         next(err);
@@ -470,27 +478,35 @@ const deleteCommentById = async (req, res, next) => {
 };
 
 const getComments = async (req, res, next) => {
+    const user = req.user;
     const pid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
     try {
         if (!pid) throw new IllegalArgumentException("Missing Post Id");
         const validId = isValidObjectId(pid);
         if (!validId) throw new IllegalArgumentException("Invalid Post Id");
-        const commentsPromise = PostComment.find()
+        const commentsPromise = PostComment.find({ post: pid })
             .sort("-createdAt")
+            .select("-post -__v")
+            .populate("user", EntityFieldsFilter.USER)
             .limit(commentsPerPage)
             .skip((page - 1) * commentsPerPage)
             .exec();
 
-        const countPromise = PostComment.countDocuments();
+        const countPromise = PostComment.countDocuments({ post: pid });
         const [comments, count] = await Promise.all([
             commentsPromise,
             countPromise,
         ]);
+        if (user?._id) await CmntGen.generateMeta(user._id, comments, meta);
+        else meta.isLiked = new Array(count).fill(false);
         res.json({
             success: true,
-            data: comments,
+            data: { comments: comments, meta: meta },
             totalPages: Math.ceil(count / commentsPerPage),
             currentPage: Number(page),
             _links: { post: HyperLinks.postOpsLinks(pid) },
@@ -614,6 +630,9 @@ const deletePostById = async (req, res, next) => {
         // TODO Check owner
         const result = await Post.findByIdAndDelete(pid);
         if (!result) throw new ResourceNotFoundException("Post not found");
+        const owner = await User.findById(result.owner._id);
+        if (owner) owner.postsCount > 0 ? owner.postsCount-- : null;
+        await owner?.save();
         res.json({ success: true, data: result });
     } catch (err) {
         next(err);
