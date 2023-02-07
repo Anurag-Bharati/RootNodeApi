@@ -12,29 +12,18 @@ const verifyUser = (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next(err);
-        const user = await User.findById(decoded._id, {
-            _id: 1,
-            username: 1,
-            avatar: 1,
-            connectionCount: 1,
-            role: 1,
-        });
+        const user = await User.findById(decoded._id);
         req.user = user;
         next();
     });
 };
 
-const checkUserOrAnonymous = (req, res, next) => {
+const userBeOptional = (req, res, next) => {
     if (!req.headers.authorization) return next();
     token = req.headers.authorization.split(" ")[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next();
-        req.user = await User.findById(decoded._id, {
-            _id: 1,
-            username: 1,
-            avatar: 1,
-            connectionCount: 1,
-        });
+        req.user = await User.findById(decoded._id);
         next();
     });
 };
@@ -54,4 +43,4 @@ const isMod = (req, res, next) => {
     next();
 };
 
-module.exports = { verifyUser, isAdmin, isMod, checkUserOrAnonymous };
+module.exports = { verifyUser, isAdmin, isMod, userBeOptional };

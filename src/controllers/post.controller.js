@@ -4,6 +4,7 @@ const {
     PostLike,
     PostComment,
     PostCommentLike,
+    Connection,
 } = require("../models/models.wrapper");
 
 const {
@@ -14,32 +15,151 @@ const {
 } = require("../throwable/exception.rootnode");
 
 const { isValidObjectId } = require("mongoose");
-
+const { Sort } = require("../utils/algorithms");
+const PostGen = require("../generator/post.gen");
+const CmntGen = require("../generator/cmnt.gen");
+const EntityFieldsFilter = require("../utils/entity.filter");
+const ConsoleLog = require("../utils/log.console");
+const HyperLinks = require("../utils/_link.hyper");
 /* constraints start*/
 const postPerPage = 5;
 const commentsPerPage = 5;
 const likerPerPage = 10;
 /* constraints end*/
 
+/* runtime store */
+const userFeed = new Map();
+/* runtime end */
+
 const getAllPublicPost = async (req, res, next) => {
+    const user = req.user;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
     try {
-        const [publicFeed, totalPages] = await Promise.all([
+        const [publicFeed, totalPosts] = await Promise.all([
             // execute query with page and limit values
             Post.find({ visibility: "public" })
+                .populate("owner", EntityFieldsFilter.USER)
                 .sort("-createdAt")
                 .limit(postPerPage)
                 .skip((page - 1) * postPerPage)
                 .exec(),
             // get total documents in the Posts collection
-            Post.countDocuments(),
+            Post.countDocuments({ visibility: "public" }),
         ]);
+        if (user?._id) await PostGen.generateMeta(user._id, publicFeed, meta);
+        else meta.isLiked = new Array(totalPosts).fill(false);
         res.json({
             success: true,
-            data: publicFeed,
-            totalPages: Math.ceil(totalPages / postPerPage),
+            data: { feed: publicFeed, meta: meta },
+            totalPages: Math.ceil(totalPosts / postPerPage),
             currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+const getPostByUser = async (req, res, next) => {
+    const user = req.user;
+    const id = req.params.id;
+
+    let page = req.query.page || 1;
+    page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
+
+    try {
+        if (!id) throw new IllegalArgumentException("Missing user id");
+        all =
+            user._id.equals(id) ||
+            Connection.exists({ rootnode: user._id, node: id });
+        const [posts, totalPosts] = await Promise.all([
+            // execute query with page and limit values
+            Post.find({
+                visibility: all ? ["public", "mutual"] : "public",
+                owner: id,
+            })
+                .populate("owner", EntityFieldsFilter.USER)
+                .sort("-createdAt")
+                .limit(postPerPage)
+                .skip((page - 1) * postPerPage)
+                .exec(),
+            // get total documents in the Posts collection
+            Post.countDocuments({
+                visibility: all ? "public" : "public",
+            }),
+        ]);
+        if (user?._id) await PostGen.generateMeta(user._id, posts, meta);
+        else meta.isLiked = new Array(totalPosts).fill(false);
+        res.json({
+            success: true,
+            data: { feed: posts, meta: meta },
+            totalPages: Math.ceil(totalPosts / postPerPage),
+            currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getMyFeed = async (req, res, next) => {
+    let { page, refresh } = req.query;
+    const user = req.user;
+    const uidStr = user._id.toString();
+    page = page > 0 ? page : 1;
+    refresh = refresh == 1 ? true : false;
+
+    let feed = [];
+    const conns = [];
+    const meta = {
+        isLiked: [],
+    };
+
+    try {
+        if (refresh === true) userFeed.delete(uidStr);
+        if (!userFeed.has(uidStr)) {
+            ConsoleLog.genNewX("PostFeed", "feed", user.username);
+            const myConns = await Connection.find({ rootnode: user._id });
+            myConns.map((conn) => conns.push(conn.node));
+            await PostGen.generateFeed(user._id, conns, feed);
+            feed.sort(Sort.dynamicSort("-createdAt"));
+            userFeed.set(uidStr, feed);
+        } else {
+            ConsoleLog.usingOldX("PostFeed", "feed", user.username);
+
+            feed = userFeed.get(uidStr);
+        }
+        const paginatedFeed = feed.slice(
+            (page - 1) * postPerPage,
+            page * postPerPage
+        );
+        await PostGen.generateMeta(user._id, paginatedFeed, meta);
+        const count = feed.length;
+
+        res.json({
+            success: true,
+            data: { feed: paginatedFeed, meta: meta },
+            totalPages: Math.ceil(count / postPerPage),
+            currentPage: Number(page),
+            _links: {
+                self: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -52,11 +172,12 @@ const getPostById = async (req, res, next) => {
         if (!pid) throw new IllegalArgumentException("Missing post id");
         if (!isValidObjectId(pid))
             throw new IllegalArgumentException("Invalid post id");
-        const post = await Post.findById(pid);
+        const post = await Post.findById(pid).populate("owner");
         if (!post) throw new ResourceNotFoundException("Post not found");
         res.json({
             success: true,
             data: post,
+            _links: { self: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -100,9 +221,8 @@ const createPost = async (req, res, next) => {
                 });
             });
         }
-
         let type;
-        if (isMarkdown === true) type = "markdown";
+        if (isMarkdown == "true") type = "markdown";
         else if (hasMedia && caption) type = "mixed";
         else if (hasMedia && !caption) type = "media";
         else type = "text";
@@ -133,6 +253,7 @@ const createPost = async (req, res, next) => {
             success: true,
             message: "Post created successfully!",
             data: post,
+            _links: { self: HyperLinks.postOpsLinks(post._id) },
         });
     } catch (err) {
         next(err);
@@ -140,7 +261,7 @@ const createPost = async (req, res, next) => {
 };
 
 const likeUnlikePost = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     const uid = req.user._id;
     try {
         if (!pid) throw new IllegalArgumentException("Invalid/Missing Post Id");
@@ -174,6 +295,7 @@ const likeUnlikePost = async (req, res, next) => {
                 success: true,
                 message: "Post liked successfully!",
                 data: { liked: true },
+                _links: { self: HyperLinks.postOpsLinks(pid) },
             });
         }
     } catch (err) {
@@ -182,7 +304,7 @@ const likeUnlikePost = async (req, res, next) => {
 };
 
 const getPostLiker = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
@@ -208,6 +330,7 @@ const getPostLiker = async (req, res, next) => {
             data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -215,7 +338,7 @@ const getPostLiker = async (req, res, next) => {
 };
 
 const getPostCommentLiker = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
     try {
@@ -243,6 +366,7 @@ const getPostCommentLiker = async (req, res, next) => {
             data: likers,
             totalPages: Math.ceil(count / likerPerPage),
             currentPage: Number(page),
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
         });
     } catch (err) {
         next(err);
@@ -250,8 +374,9 @@ const getPostCommentLiker = async (req, res, next) => {
 };
 
 const addComment = async (req, res, next) => {
-    const pid = req.params.pid;
+    const pid = req.params.id;
     const cmt = req.body.comment;
+    console.log(req.body);
     try {
         if (!pid) throw new IllegalArgumentException("Missing post Id");
         if (!cmt) throw new IllegalArgumentException("Missing comment field");
@@ -273,10 +398,19 @@ const addComment = async (req, res, next) => {
             post.save(),
         ]);
 
-        res.json({
+        const processedComment = await newComment.populate(
+            "user",
+            EntityFieldsFilter.USER
+        );
+
+        res.status(201).json({
             success: true,
             message: "Comment posted!",
-            data: newComment,
+            data: processedComment,
+            _links: {
+                self: HyperLinks.commentOpsLinks(newComment._id),
+                post: HyperLinks.postOpsLinks(pid),
+            },
         });
     } catch (err) {
         next(err);
@@ -284,7 +418,7 @@ const addComment = async (req, res, next) => {
 };
 
 const getCommentByID = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing comment id");
         const validId = isValidObjectId(cid);
@@ -294,6 +428,7 @@ const getCommentByID = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: comment,
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
         });
     } catch (err) {
         next(err);
@@ -301,7 +436,7 @@ const getCommentByID = async (req, res, next) => {
 };
 
 const updateCommentByID = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         const validId = isValidObjectId(cid);
@@ -314,14 +449,18 @@ const updateCommentByID = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedComment });
+        res.json({
+            success: true,
+            data: updatedComment,
+            _links: { self: HyperLinks.commentOpsLinks(cid) },
+        });
     } catch (err) {
         next(err);
     }
 };
 
 const deleteCommentById = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
         const validId = isValidObjectId(cid);
@@ -329,6 +468,9 @@ const deleteCommentById = async (req, res, next) => {
         // TODO check owner
         const result = await PostComment.findByIdAndDelete(cid);
         if (!result) throw new ResourceNotFoundException("Comment not found");
+        const post = await Post.findById(result.post);
+        post.commentsCount > 0 ? post.commentsCount-- : null;
+        await post.save();
         res.json({ success: true, data: result });
     } catch (err) {
         next(err);
@@ -336,29 +478,38 @@ const deleteCommentById = async (req, res, next) => {
 };
 
 const getComments = async (req, res, next) => {
-    const pid = req.params.pid;
+    const user = req.user;
+    const pid = req.params.id;
     let page = req.query.page || 1;
     page = page > 0 ? page : 1;
+    const meta = {
+        isLiked: [],
+    };
     try {
         if (!pid) throw new IllegalArgumentException("Missing Post Id");
         const validId = isValidObjectId(pid);
         if (!validId) throw new IllegalArgumentException("Invalid Post Id");
-        const commentsPromise = PostComment.find()
+        const commentsPromise = PostComment.find({ post: pid })
             .sort("-createdAt")
+            .select("-post -__v")
+            .populate("user", EntityFieldsFilter.USER)
             .limit(commentsPerPage)
             .skip((page - 1) * commentsPerPage)
             .exec();
 
-        const countPromise = PostComment.countDocuments();
+        const countPromise = PostComment.countDocuments({ post: pid });
         const [comments, count] = await Promise.all([
             commentsPromise,
             countPromise,
         ]);
+        if (user?._id) await CmntGen.generateMeta(user._id, comments, meta);
+        else meta.isLiked = new Array(count).fill(false);
         res.json({
             success: true,
-            data: comments,
+            data: { comments: comments, meta: meta },
             totalPages: Math.ceil(count / commentsPerPage),
             currentPage: Number(page),
+            _links: { post: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {
         next(err);
@@ -366,7 +517,7 @@ const getComments = async (req, res, next) => {
 };
 
 const likeUnlikeComment = async (req, res, next) => {
-    const cid = req.params.cid;
+    const cid = req.params.id;
     const uid = req.user._id;
     try {
         if (!cid) throw new IllegalArgumentException("Missing Comment Id");
@@ -408,6 +559,7 @@ const likeUnlikeComment = async (req, res, next) => {
                 success: true,
                 message: "Comment liked successfully!",
                 data: { liked: true },
+                _links: { self: HyperLinks.commentOpsLinks(cid) },
             });
         }
     } catch (err) {
@@ -459,7 +611,11 @@ const updatePostById = async (req, res, next) => {
             { $set: req.body },
             { new: true }
         );
-        res.json({ success: true, data: updatedPost });
+        res.json({
+            success: true,
+            data: updatedPost,
+            _links: { self: HyperLinks.postOpsLinks(pid) },
+        });
     } catch (err) {
         next(err);
     }
@@ -474,6 +630,9 @@ const deletePostById = async (req, res, next) => {
         // TODO Check owner
         const result = await Post.findByIdAndDelete(pid);
         if (!result) throw new ResourceNotFoundException("Post not found");
+        const owner = await User.findById(result.owner._id);
+        if (owner) owner.postsCount > 0 ? owner.postsCount-- : null;
+        await owner?.save();
         res.json({ success: true, data: result });
     } catch (err) {
         next(err);
@@ -497,7 +656,9 @@ const deleteAllPost = async (req, res, next) => {
 
 module.exports = {
     getAllPublicPost,
+    getMyFeed,
     getPostById,
+    getPostByUser,
     createPost,
     updatePostById,
     deletePostById,

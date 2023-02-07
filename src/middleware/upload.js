@@ -15,7 +15,7 @@ const maxFilesCount = 10;
 const maxFileSize = 100 * 1024 * 1024;
 const maxImageSize = 10 * 1024 * 1024;
 const whiteListVideoTypes = [".mp4", ".mkv"];
-const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif"];
+const whiteListImageTypes = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 const whiteListPath = ["post", "story"];
 const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);
 /* constraints end */

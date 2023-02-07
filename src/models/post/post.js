@@ -18,6 +18,12 @@ const postSchema = new Schema(
             required: true,
         },
 
+        heading: {
+            type: String,
+            maxlength: 128,
+            trim: true,
+        },
+
         caption: {
             type: String,
             maxlength: 512,
@@ -66,7 +72,7 @@ const postSchema = new Schema(
 
         visibility: {
             type: String,
-            enum: ["public", "private", "followers"],
+            enum: ["public", "private", "mutual"],
             default: "public",
         },
 
@@ -85,8 +91,13 @@ const postSchema = new Schema(
             default: true,
         },
     },
-    { timestamps: true }
+    { timestamps: true },
+    { toObject: { getters: true } }
 );
+
+postSchema.virtual("createdAt_ms").get(function () {
+    return this.createdAt.getTime();
+});
 
 const Post = model("Post", postSchema);
 

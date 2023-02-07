@@ -14,5 +14,9 @@ models.Connection = require("./user/user.connection");
 /* STORY MODEL */
 models.Story = require("./story/story");
 models.StoryLike = require("./story/story.like");
+/* EVENT MODEL */
+models.Event = require("./event/event");
+models.EventInterested = require("./event/event.interested");
+models.EventCandidate = require("./event/event.candidate");
 
 module.exports = models;

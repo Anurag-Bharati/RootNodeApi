@@ -87,6 +87,15 @@ class SessionExpiredException extends Error {
         this.statusCode = statusCode;
     }
 }
+
+class IllegalOperationException extends Error {
+    constructor(message, statusCode = 403) {
+        super(message);
+        this.name = "IllegalOperation";
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
 /* exception end */
 
 const Exceptions = {
@@ -101,6 +110,7 @@ const Exceptions = {
     FilesExceedsFilesLimitExecption,
     UnsupportedFileFormatException,
     SessionExpiredException,
+    IllegalOperationException,
 };
 
 module.exports = Exceptions;

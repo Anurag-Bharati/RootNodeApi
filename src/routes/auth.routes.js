@@ -1,17 +1,24 @@
 const express = require("express");
+const { Routes } = require("../config/constant");
 const router = express.Router();
 const controller = require("../controllers/auth.controller");
 const utils = require("../utils/utils");
 
 router
-    .route("/register")
+    .route(Routes.REGISTER)
     .get(utils.notImplemented)
     .post(controller.handleRegister);
 
-router.route("/login").get(utils.notImplemented).post(controller.handleLogin);
+router
+    .route(Routes.LOGIN)
+    .get(utils.notImplemented)
+    .post(controller.handleLogin);
 
-router.route("/refresh").get(controller.handleRefreshToken);
+router.route(Routes.REFRESH).get(controller.handleRefreshToken);
 
-router.route("/logout").get(utils.notImplemented).post(controller.handleLogout);
+router
+    .route(Routes.LOGOUT)
+    .get(utils.notImplemented)
+    .post(controller.handleLogout);
 
 module.exports = router;

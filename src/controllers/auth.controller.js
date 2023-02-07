@@ -1,4 +1,4 @@
-const { User, Profile, UserSession } = require("../models/models.wrapper");
+const { User, UserSession } = require("../models/models.wrapper");
 const jwt = require("jsonwebtoken");
 require("colors");
 const {
@@ -7,29 +7,34 @@ const {
     FieldNotMatchedException,
     IllegalArgumentException,
 } = require("../throwable/exception.rootnode");
+const HyperLinks = require("../utils/_link.hyper");
 
 const handleLogin = async (req, res, next) => {
     let now = new Date();
     let nowInSec = Math.ceil(now.getTime() * 0.001);
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
     try {
-        if (!username || !password) {
+        if ((!username && !email) || !password) {
             throw new IllegalArgumentException("Missing required fields");
         }
 
-        const user = await User.findOne({ username: username });
-
+        let user = null;
+        const [ubn, ube] = await Promise.all([
+            User.findOne({ username: username }),
+            User.findOne({ email: email }),
+        ]);
+        user = ubn ? ubn : ube;
         if (!user) {
-            throw new EntityNotFoundException(
-                `User with ${username} name does not exists`
-            );
+            let err;
+            if (!ubn) err = `User with username '${username}' does not exists`;
+            else if (!ube) err = `User with email '${email}' does not exists`;
+            else err = `User does not exists`;
+            throw new EntityNotFoundException(err);
         }
 
         const isMatch = await user.matchPassword(password);
-        if (!isMatch) {
-            throw new FieldNotMatchedException("Incorrect password");
-        }
+        if (!isMatch) throw new FieldNotMatchedException("Incorrect password");
 
         if (user.status !== "active") {
             return res.status(401).json({
@@ -40,17 +45,12 @@ const handleLogin = async (req, res, next) => {
         }
 
         let session = await UserSession.findOne({ user: user._id });
-
-        if (!session) {
-            session = await user.generateRefreshToken();
-        }
-
+        if (!session) session = await user.generateRefreshToken();
         if (nowInSec > session.expiresAt) {
             await session.remove();
-            authToken = await session.generateToken();
+            session = await user.generateRefreshToken();
         }
-
-        let accessToken = await user.generateAccessToken();
+        const accessToken = await user.generateAccessToken();
 
         console.log(
             "↪".bold,
@@ -67,10 +67,18 @@ const handleLogin = async (req, res, next) => {
 
         res.json({
             success: true,
-            reply: "User logged in succesfully",
-            role: user.role,
-            accountStatus: user.status,
-            accessToken: accessToken,
+            message: "User logged in succesfully",
+            data: {
+                rootnode: user,
+                accessToken: accessToken,
+            },
+            _links: {
+                user: HyperLinks.userLinks,
+                post: HyperLinks.postLinks,
+                story: HyperLinks.storyLinks,
+                event: HyperLinks.eventLinks,
+                connection: HyperLinks.connLinks,
+            },
         });
     } catch (err) {
         next(err);
@@ -79,30 +87,31 @@ const handleLogin = async (req, res, next) => {
 
 const handleRegister = async (req, res, next) => {
     let now = new Date();
-    const { username, email, password, fname, lname } = req.body;
+    const { email, password, fname, lname } = req.body;
 
     try {
-        if (!username || !email || !password || !fname || !lname) {
+        if (!email || !password || !fname || !lname) {
             throw new IllegalArgumentException("Missing required fields");
         }
 
-        const user = await User.findOne({ username: username });
+        const user = await User.exists({ email: email });
 
         if (user)
             throw new EntityConflictException(
-                `User with username ${username} already exists`
+                `User with email ${email} already exists`
             );
 
-        const newUser = await User({ username, email, password });
-        newUser.password = await newUser.encryptPassword(password);
+        const newUser = User({ fname, lname, email });
 
-        const profile = new Profile();
-        profile.user = newUser._id;
-        profile.fname = fname;
-        profile.lname = lname;
+        const [username, hash] = await Promise.all([
+            newUser.generateUsername(fname, lname),
+            newUser.encryptPassword(password),
+        ]);
+
+        newUser.username = username;
+        newUser.password = hash;
 
         await newUser.save();
-        await profile.save();
 
         console.log(
             "↪".bold,
@@ -113,9 +122,9 @@ const handleRegister = async (req, res, next) => {
 
         res.status(201).json({
             success: true,
-            reply: "User registered successfully!",
-            username: newUser.username,
-            user: newUser._id,
+            message: "User registered successfully!",
+            data: { username: newUser.username, _id: newUser._id },
+            _links: { self: HyperLinks.authLinks },
         });
     } catch (err) {
         next(err);
@@ -153,10 +162,19 @@ const handleRefreshToken = async (req, res, next) => {
             const accessToken = await foundUser.generateAccessToken();
             res.json({
                 success: true,
-                reply: "Access-Token renewed",
-                accountStatus: foundUser.status,
-                role: foundUser.role,
-                accessToken: accessToken,
+                message: "Access-Token renewed",
+                data: {
+                    accountStatus: foundUser.status,
+                    role: foundUser.role,
+                    accessToken: accessToken,
+                },
+                _links: {
+                    user: HyperLinks.userLinks,
+                    post: HyperLinks.postLinks,
+                    story: HyperLinks.storyLinks,
+                    event: HyperLinks.eventLinks,
+                    connection: HyperLinks.connLinks,
+                },
             });
         }
     );

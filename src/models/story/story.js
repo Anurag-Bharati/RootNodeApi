@@ -14,12 +14,12 @@ const storySchema = new Schema(
             required: true,
         },
 
-        heading: {
+        quote: {
             type: String,
-            maxlength: 128,
+            maxlength: 5000,
             trim: true,
         },
-
+        color: { type: Number, default: 0xff00bcd4 },
         media: {
             url: String,
             type: {
@@ -46,7 +46,7 @@ const storySchema = new Schema(
 
         visibility: {
             type: String,
-            enum: ["public", "private", "followers"],
+            enum: ["public", "private", "mutual"],
             default: "public",
         },
 
