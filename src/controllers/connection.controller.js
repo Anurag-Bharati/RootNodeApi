@@ -1,5 +1,6 @@
 const { isValidObjectId } = require("mongoose");
 const ConnGen = require("../generator/conn.gen");
+const MsgGen = require("../generator/msg.gen");
 const { Connection, User } = require("../models/models.wrapper");
 const {
     IllegalArgumentException,
@@ -14,6 +15,7 @@ const HyperLinks = require("../utils/_link.hyper");
 
 /* constraints start*/
 const connPerPage = 10;
+const msgPerPage = 10;
 const limitConstraint = 3;
 const recomConstraint = 10;
 const connStatusEnum = ["accepted", "rejected", "pending"];
@@ -41,7 +43,6 @@ const getAllConnections = async (req, res, next) => {
             rootnode: rootnode._id,
         });
         const [conns, count] = await Promise.all([connsPromise, countPromise]);
-
         res.json({
             success: true,
             data: conns,
@@ -325,6 +326,25 @@ const updateConnectionById = async (req, res, next) => {
     }
 };
 
+const getRecentMessages = async (req, res, next) => {
+    const rootnode = req.user;
+    let { page, refresh } = req.query;
+    refresh = refresh == 1 ? true : false;
+    page = page > 0 ? page : 1;
+    try {
+        recents = MsgGen.genRecentMessages(rootnode, msgPerPage, page);
+        res.json({
+            success: true,
+            data: recents,
+            totalPages: Math.ceil(recents.length / msgPerPage),
+            currentPage: Number(page),
+            _links: { self: HyperLinks.connLinks },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getAllConnections,
     getMyOldAndRecentConns,
@@ -333,4 +353,5 @@ module.exports = {
     hasConnection,
     userConnectionToggler,
     updateConnectionById,
+    getRecentMessages,
 };

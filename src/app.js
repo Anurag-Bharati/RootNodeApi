@@ -9,7 +9,7 @@ const runApp = (params) => {
     const app = express();
     app.set("trust proxy", true);
     app.use(cookieParser());
-    app.use(cors("*"));
+    app.use(cors({ credentials: true, origin: true }));
     pipeline.init(logger, params.showCause);
     app.use(pipeline.entryMiddleware);
     app.use(pipeline.exitMiddleware);

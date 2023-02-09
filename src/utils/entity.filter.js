@@ -7,6 +7,7 @@ const USER = [
     "avatar",
     "showOnlineStatus",
     "isVerified",
+    "status",
 ];
 
 EntityFieldsFilter.USER = USER;

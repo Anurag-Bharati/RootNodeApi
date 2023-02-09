@@ -1,12 +1,10 @@
-const sendMessage = (event, sender, reciever, message) => {
-    if (!reciever) return;
-    sender.to(reciever.id).emit("msg", sender.id, message);
-};
-const disconnect = (socket) => {
-    console.log(" Left ".bold.red.inverse + " " + socket.id);
+const User = require("../../../models/user/user");
+const IOEvents = require("../helper/events.socket");
+
+const sendMessage = function (message) {
+    this.broadcast.emit(IOEvents.MESSAGE, this.id, message);
 };
 
 module.exports = {
-    disconnect,
     sendMessage,
 };

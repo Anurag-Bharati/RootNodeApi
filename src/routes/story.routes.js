@@ -8,7 +8,7 @@ const { Routes } = require("../config/constant");
 
 router
     .route(Routes.BASE)
-    .get(auth.verifyUser, controller.getAllPublicStories)
+    .get(controller.getAllPublicStories)
     .post(auth.verifyUser, upload.single("media"), controller.createStory)
     .put(utils.notImplemented)
     .delete(auth.verifyUser, controller.deleteAllStories);

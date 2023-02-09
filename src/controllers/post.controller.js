@@ -174,9 +174,10 @@ const getPostById = async (req, res, next) => {
             throw new IllegalArgumentException("Invalid post id");
         const post = await Post.findById(pid).populate("owner");
         if (!post) throw new ResourceNotFoundException("Post not found");
+        const liked = await PostLike.exists({ post: pid, user: req.user._id });
         res.json({
             success: true,
-            data: post,
+            data: { post: post, hasLiked: liked ? true : false },
             _links: { self: HyperLinks.postOpsLinks(pid) },
         });
     } catch (err) {

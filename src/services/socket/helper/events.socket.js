@@ -1,11 +1,14 @@
 const IOEvents = {};
 /* events start  */
 
-IOEvents.CONNECT = "connect";
+IOEvents.CONNECT = "connection";
 IOEvents.DISCONNECT = "disconnect";
 
-IOEvents.MSG = "msg";
-IOEvents.HELLO = "hello";
+IOEvents.SEND_MESSAGE = "message:send";
+IOEvents.MESSAGE = "message";
+
+IOEvents.HELLO = "io:greet";
+IOEvents.IDENTIFY = "io:me";
 
 /* events end  */
 module.exports = IOEvents;

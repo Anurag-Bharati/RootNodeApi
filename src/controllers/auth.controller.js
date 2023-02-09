@@ -36,13 +36,13 @@ const handleLogin = async (req, res, next) => {
         const isMatch = await user.matchPassword(password);
         if (!isMatch) throw new FieldNotMatchedException("Incorrect password");
 
-        if (user.status !== "active") {
-            return res.status(401).json({
-                success: false,
-                accountStatus: user.status,
-                reply: "Account not active",
-            });
-        }
+        // if (user.status !== "active") {
+        //     return res.status(401).json({
+        //         success: false,
+        //         accountStatus: user.status,
+        //         reply: "Account not active",
+        //     });
+        // }
 
         let session = await UserSession.findOne({ user: user._id });
         if (!session) session = await user.generateRefreshToken();
@@ -58,6 +58,7 @@ const handleLogin = async (req, res, next) => {
             `${user._id} at ${now.toLocaleString()}`.cyan
         );
         // TODO Add secure:true in production
+
         res.cookie("token", session.token, {
             httpOnly: true,
             maxAge: process.env.HTTP_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,

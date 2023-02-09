@@ -36,6 +36,10 @@ router
     .put(controller.updateConnectionById)
     .all(utils.notImplemented);
 
-router;
+/* MESSAGE */
+router
+    .route(Routes.RECENT_MSG)
+    .get(auth.verifyUser, controller.getRecentMessages)
+    .all(utils.notImplemented);
 
 module.exports = router;

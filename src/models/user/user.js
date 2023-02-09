@@ -78,8 +78,8 @@ const userSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ["active", "inactive", "banned"],
-            default: "active",
+            enum: ["active", "inactive", "busy", "away"],
+            default: "inactive",
         },
 
         isVerified: {
