@@ -13,7 +13,9 @@ const generateBanner = (_) =>
 |_|_\\___/\\___/\\__|_|\\_\\___/\\____\\___|
 `.bold +
     `
-V ${_.V} - Running on ${_.ENV} environment \nUsing ${_.DS} Database - API: ${_.API_ROOT}
+V ${_.V} - Running on ${
+        _.ENV === "prod" ? "prod".bold : _.ENV
+    } environment \nUsing ${_.DS} Database - API: ${_.API_ROOT}
 `;
 
 const generateError = (err) => {
@@ -27,13 +29,17 @@ const generateError = (err) => {
     );
 };
 
-const connectDBAndLaunch = async (launch, res) => {
-    if (res.err) return generateError(res.err);
-    const conn = await mongoose.connect(
-        process.env.USECLOUDDB === "1"
-            ? process.env.CLOUDDB
+const connectMongoDB = async () => {
+    return mongoose.connect(
+        process.env.NODE_ENV === "test"
+            ? process.env.TESTDB
             : process.env.LOCALDB
     );
+};
+
+const connectDBAndLaunch = async (launch, res) => {
+    if (res.err) return generateError(res.err);
+    const conn = await connectMongoDB();
 
     // Clear and move to (0, 0)
     process.stdout.write("\u001b[2J\u001b[0;0H");
@@ -41,7 +47,7 @@ const connectDBAndLaunch = async (launch, res) => {
     console.clear();
     const bannerParams = {};
     bannerParams.V = process.env.VERSION || "N/A";
-    bannerParams.ENV = process.env.ENV || "N/A";
+    bannerParams.ENV = process.env.NODE_ENV || "N/A";
     bannerParams.DS = process.env.USECLOUDDB === "1" ? "Cloud" : "Local";
     bannerParams.API_ROOT = process.env.API_URL || "/api/v0";
 
@@ -58,7 +64,7 @@ const connectDBAndLaunch = async (launch, res) => {
         if (a === "showCause") showCause = true;
     });
     const params = { showCause };
-    launch(params);
+    return launch(params);
 };
 
-module.exports = connectDBAndLaunch;
+module.exports = { connectMongoDB, connectDBAndLaunch };

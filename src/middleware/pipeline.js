@@ -4,7 +4,7 @@ require("colors");
 let showCause = false;
 const init = (loggerInstance, _showCause) => {
     logger = loggerInstance;
-    showCause = _showCause;
+    showCause = _showCause || false;
 };
 
 const entryMiddleware = (req, res, next) => {

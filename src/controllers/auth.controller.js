@@ -65,7 +65,7 @@ const handleLogin = async (req, res, next) => {
             sameSite: "None",
             // secure: true,
         });
-
+        // console.log(accessToken);
         res.json({
             success: true,
             message: "User logged in succesfully",
