@@ -42,10 +42,10 @@ const getAllPublicStories = async (req, res, next) => {
             Story.countDocuments({ visibility: "public" }),
         ]);
         const watched = publicStories.filter((story) =>
-            story.seenBy.includes(req.user._id)
+            story.seenBy.includes(req.user?._id)
         );
         const notWatched = publicStories.filter(
-            (story) => !story.seenBy.includes(req.user._id)
+            (story) => !story.seenBy.includes(req.user?._id)
         );
         const sorted = [...notWatched, ...watched];
         res.json({

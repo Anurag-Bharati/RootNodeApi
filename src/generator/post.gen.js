@@ -1,24 +1,17 @@
 const { Post, User, PostLike } = require("../models/models.wrapper");
 const EntityFieldsFilter = require("../utils/entity.filter");
-const { ObjectId } = require("mongoose");
+require("mongoose");
 const PostGen = {};
 /* Feed */
-const generateFeed = async (uid, conns, feed) => {
-    await Promise.all(
-        conns.map(async (id) => {
-            let postUser = await User.findById(id);
-            let posts = postUser
-                ? await Post.find({
-                      $or: [{ visibility: "public" }, { visibility: "mutual" }],
-                      owner: id,
-                  })
-                      .sort("-createdAt")
-                      .populate("owner", EntityFieldsFilter.USER)
-                : {};
+const generateFeed = async function (uid, conns, feed) {
+    const posts = await Post.find({
+        $or: [{ visibility: "public" }, { visibility: "mutual" }],
+        owner: { $in: conns },
+    })
+        .sort("-createdAt")
+        .populate("owner", EntityFieldsFilter.USER);
 
-            posts.forEach((post) => feed.push(post));
-        })
-    );
+    feed.push(...posts);
 };
 
 const generateMeta = async (uid, posts, meta) => {

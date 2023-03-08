@@ -30,6 +30,7 @@ const FEED = "/feed";
 const OLD_RECENT_CONNS = "/old-recent";
 const RECOM = "/recom";
 const RANDOM = "/random";
+const RECENT_MSG = "/msg/recent";
 
 const ID_VAR = "id";
 const ID_PARAM = `/:${ID_VAR}`;
@@ -63,6 +64,7 @@ Routes.ID_LIKE = ID_PARAM + OPS_LIKE;
 Routes.POST_CMNT = ID_PARAM + CMNT;
 Routes.CMT_WITH_ID = CMNT + ID_PARAM;
 Routes.CMNT_LIKE = CMNT + ID_PARAM + OPS_LIKE;
+Routes.RECENT_MSG = RECENT_MSG;
 
 Routes.MY = MY;
 Routes.JOIN_LEAVE_EVENT = ID_PARAM + OPS_JOIN;

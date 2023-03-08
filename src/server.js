@@ -1,6 +1,8 @@
 const colors = require("colors/safe");
 const dotenv = require("dotenv");
 const runApp = require("./app.js");
+const RootNodeSocket = require("./services/socket/socket");
+const http = require("http");
 const utils = require("./utils/utils.js");
 const { BaseRoutes } = require("./config/constant.js");
 const { serveRandom } = require("./utils/foods");
@@ -18,6 +20,7 @@ const ROOT = process.env.API_URL || "/api/v0";
 
 const startApp = (params) => {
     const app = runApp(params);
+    const server = http.createServer(app);
     /* routing start */
     app.use(BaseRoutes.AUTH, routes.auth);
     app.use(BaseRoutes.USER, routes.user);
@@ -30,7 +33,9 @@ const startApp = (params) => {
     app.all(BaseRoutes.WILDCARD, utils.notImplemented);
     /* routing end */
     app.use(errorMiddleware);
-    app.listen(PORT, () => initialLogs());
+    server.listen(PORT, initialLogs);
+    /* start socket.io server */
+    RootNodeSocket.runSocket(server);
 };
 
 const initialLogs = () => {
