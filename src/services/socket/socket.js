@@ -1,6 +1,5 @@
 require("colors");
 const IOEvents = require("./helper/events.socket");
-const handler = require("./handler/event.handler");
 const User = require("../../models/user/user");
 const Message = require("../../models/user/user.message");
 

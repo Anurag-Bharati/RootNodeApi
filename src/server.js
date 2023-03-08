@@ -7,7 +7,7 @@ const utils = require("./utils/utils.js");
 const { BaseRoutes } = require("./config/constant.js");
 const { serveRandom } = require("./utils/foods");
 const routes = require("./routes/routes.wrapper");
-const connectDBAndLaunch = require("./config/db");
+const { connectDBAndLaunch } = require("./config/db");
 const { errorMiddleware } = require("./middleware/pipeline");
 const initiateApp = require("./config/initiate.server");
 
@@ -33,6 +33,7 @@ const startApp = (params) => {
     app.all(BaseRoutes.WILDCARD, utils.notImplemented);
     /* routing end */
     app.use(errorMiddleware);
+    if (process.env.NODE_ENV === "test") return app;
     server.listen(PORT, initialLogs);
     /* start socket.io server */
     RootNodeSocket.runSocket(server);
@@ -52,4 +53,6 @@ const initialLogs = () => {
 };
 
 // Launch
-initiateApp().then((res) => connectDBAndLaunch(startApp, res));
+if (process.env.NODE_ENV !== "test")
+    initiateApp().then((res) => connectDBAndLaunch(startApp, res));
+module.exports = startApp;
