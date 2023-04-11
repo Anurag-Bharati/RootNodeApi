@@ -20,7 +20,7 @@ const whiteListPath = ["post", "story"];
 const whiteListMediaTypes = whiteListImageTypes.concat(whiteListVideoTypes);
 /* constraints end */
 
-const multerStorage = multer.diskStorage({
+const diskStorageEngine = multer.diskStorage({
     destination: (req, file, cb) => {
         const folder = req.query.folder;
         let path = `./public/media/uploads/all`;
@@ -36,6 +36,21 @@ const multerStorage = multer.diskStorage({
         cb(null, file.fieldname + "-" + uniqueSuffix + ext);
     },
 });
+
+const inMemoryStorageEngine = multer.memoryStorage();
+
+const getStorageEngine = () => {
+    switch (process.env.NODE_ENV) {
+        case "prod":
+            return inMemoryStorageEngine;
+        case "dev":
+            return process.env.USE_DISK_STORAGE === "1"
+                ? diskStorageEngine
+                : inMemoryStorageEngine;
+        default:
+            return diskStorageEngine;
+    }
+};
 
 const fileFilter = (req, file, cb) => {
     const { isMarkdown } = req.body;
@@ -70,11 +85,11 @@ const fileFilter = (req, file, cb) => {
 
     cb(null, true);
 };
-
-const multerMiddleware = multer({
-    storage: multerStorage,
+const storageEngine = getStorageEngine();
+const upload = multer({
+    storage: storageEngine,
     fileFilter: fileFilter,
     limits: { fileSize: maxFileSize, files: maxFilesCount },
 });
 
-module.exports = multerMiddleware;
+module.exports = upload;

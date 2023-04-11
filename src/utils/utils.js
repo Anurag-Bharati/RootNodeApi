@@ -8,6 +8,7 @@ const notImplemented = (req, res, next) =>
 const notFound = function (req, res, next) {
     next(new RouteNotFoundError("Route does not exists"));
 };
+
 const utils = {};
 utils.notImplemented = notImplemented;
 utils.notFound = notFound;

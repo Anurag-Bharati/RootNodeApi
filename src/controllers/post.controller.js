@@ -14,6 +14,9 @@ const {
     IllegalPostTypeExecption,
 } = require("../throwable/exception.rootnode");
 
+const bufferParser = require("../utils/buffer.parser");
+const cloudinary = require("../config/cloudinary");
+
 const { isValidObjectId } = require("mongoose");
 const { Sort } = require("../utils/algorithms");
 const PostGen = require("../generator/post.gen");
@@ -21,6 +24,8 @@ const CmntGen = require("../generator/cmnt.gen");
 const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
 const HyperLinks = require("../utils/_link.hyper");
+const env = process.env.NODE_ENV;
+
 /* constraints start*/
 const postPerPage = 5;
 const commentsPerPage = 5;
@@ -209,19 +214,44 @@ const createPost = async (req, res, next) => {
             );
         }
         if (hasMedia) {
-            mediaFiles.forEach((media) => {
-                if (!media.path)
-                    throw new ResourceNotFoundException("Media url not found");
-                if (!media.mimetype)
-                    throw new InvalidMediaTypeException(
-                        "Media type not specified"
-                    );
-                medias.push({
-                    url: media.path,
-                    type: media.mimetype.split("/")[0],
+            if (env === "dev")
+                mediaFiles.forEach((media) => {
+                    if (!media.path)
+                        throw new ResourceNotFoundException(
+                            "Media url not found"
+                        );
+                    if (!media.mimetype)
+                        throw new InvalidMediaTypeException(
+                            "Media type not specified"
+                        );
+                    medias.push({
+                        url: media.path,
+                        type: media.mimetype.split("/")[0],
+                    });
                 });
+
+            const promises = mediaFiles.map((x) => {
+                const file = bufferParser(x).content;
+                return cloudinary.uploader
+                    .upload(file, {
+                        folder: "uploads", // Set a folder in Cloudinary to store the uploaded files
+                        resource_type: "auto", // Let Cloudinary automatically determine the resource type (e.g., image, video)
+                    })
+                    .then((result) => {
+                        console.log("*** Success: Cloudinary Upload: ", result);
+                        medias.push({
+                            url: result.secure_url,
+                            type: result.resource_type,
+                        });
+                    })
+                    .catch((err) => {
+                        console.log("*** Error: Cloudinary Upload");
+                    });
             });
+            await Promise.all(promises);
+            console.log(medias);
         }
+
         let type;
         if (isMarkdown == "true") type = "markdown";
         else if (hasMedia && caption) type = "mixed";
