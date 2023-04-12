@@ -28,33 +28,36 @@ const checkEnvExists = () => {
  * Init: Simple Waiting Animation (replaceable)
  */
 const initiateLaunch = async () => {
+    const env = process.env.NODE_ENV;
     // hide cursor
-    process.stdout.write("\u001B[?25l");
-    process.stdout.write(
-        "\n" +
-            " RootNode ".inverse.bold +
-            " Launching Service. Please Wait".bold
-    );
-    let progress = 0;
-    const switchAt = 30;
-    const wait = 500;
-    const interval = setInterval(() => {
-        progress += 10;
-        printProgress(".".bold);
-        if (progress % switchAt == 0) {
-            process.stdout.moveCursor(-3);
-            process.stdout.write("   ");
-            process.stdout.moveCursor(-3);
-        }
-        if (progress >= 80) {
-            clearInterval(interval);
-        }
-    }, wait * 0.1);
+    if (env === "dev") {
+        process.stdout.write("\u001B[?25l");
+        process.stdout.write(
+            "\n" +
+                " RootNode ".inverse.bold +
+                " Launching Service. Please Wait".bold
+        );
+        let progress = 0;
+        const switchAt = 30;
+        const wait = 500;
+        const interval = setInterval(() => {
+            progress += 10;
+            printProgress(".".bold);
+            if (progress % switchAt == 0) {
+                process.stdout.moveCursor(-3);
+                process.stdout.write("   ");
+                process.stdout.moveCursor(-3);
+            }
+            if (progress >= 80) {
+                clearInterval(interval);
+            }
+        }, wait * 0.1);
+    }
     return new Promise((resolve) => {
         /* checks starts */
-        checkEnvExists();
+        if (env === "dev") checkEnvExists();
         /* checks end */
-        setTimeout(() => resolve(res), wait);
+        setTimeout(() => resolve(res), 0);
     });
 };
 

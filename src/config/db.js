@@ -63,7 +63,7 @@ const connectDBAndLaunch = async (launch, res) => {
     const conn = await connectMongoDB(dbLink);
     const fileStorage = getFileStorage();
     // Clear and move to (0, 0)
-    process.stdout.write("\u001b[2J\u001b[0;0H");
+    // process.stdout.write("\u001b[2J\u001b[0;0H");
     // fallback clear
     console.clear();
     const bannerParams = {};

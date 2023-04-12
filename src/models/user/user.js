@@ -49,7 +49,11 @@ const userSchema = new Schema(
             select: false,
         },
 
-        avatar: { type: String, default: "public/anonymous.jpg" },
+        avatar: {
+            type: String,
+            default:
+                "https://res.cloudinary.com/dc2qezmk3/image/upload/v1681309639/uploads/anonymous_gnepxn.png",
+        },
 
         postsCount: {
             type: Number,

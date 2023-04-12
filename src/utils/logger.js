@@ -13,6 +13,7 @@ const saveLog = (logItem) =>
 const createLog = (data) =>
     `${uuid()}\t${data}    ${format(new Date(), "yyyy/MM/dd HH:mm:ss")} \n`;
 
-const log = (data) => saveLog(createLog(data));
+const log = (data) => null;
+// const log = (data) => saveLog(createLog(data));
 
 module.exports = { createLog, saveLog, log };
