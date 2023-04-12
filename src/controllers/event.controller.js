@@ -104,9 +104,9 @@ const addEvent = async (req, res, next) => {
             throw new IllegalArgumentException("Missing event parameters");
 
         // TODO handle cover image
-        if (hasLogo) {
-            cleanedLogo = media.path;
-        }
+        // if (hasLogo) {
+        //     cleanedLogo = media.path;
+        // }
 
         const event = await Event.create({
             runner: uid,

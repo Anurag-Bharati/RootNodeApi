@@ -214,7 +214,7 @@ const createPost = async (req, res, next) => {
             );
         }
         if (hasMedia) {
-            if (env === "dev")
+            if (env === "dev") {
                 mediaFiles.forEach((media) => {
                     if (!media.path)
                         throw new ResourceNotFoundException(
@@ -229,27 +229,27 @@ const createPost = async (req, res, next) => {
                         type: media.mimetype.split("/")[0],
                     });
                 });
+                return;
+            }
 
             const promises = mediaFiles.map((x) => {
                 const file = bufferParser(x).content;
                 return cloudinary.uploader
                     .upload(file, {
-                        folder: "uploads", // Set a folder in Cloudinary to store the uploaded files
+                        folder: `post/${req.user.username}`, // Set a folder in Cloudinary to store the uploaded files
                         resource_type: "auto", // Let Cloudinary automatically determine the resource type (e.g., image, video)
                     })
                     .then((result) => {
-                        console.log("*** Success: Cloudinary Upload: ", result);
                         medias.push({
                             url: result.secure_url,
                             type: result.resource_type,
                         });
                     })
                     .catch((err) => {
-                        console.log("*** Error: Cloudinary Upload");
+                        console.error(err);
                     });
             });
             await Promise.all(promises);
-            console.log(medias);
         }
 
         let type;
@@ -615,27 +615,6 @@ const updatePostById = async (req, res, next) => {
             throw new IllegalPostTypeExecption(
                 "Markdown cannot have media files"
             );
-
-        // #BUG FIX_THIS: Add photo overwrite previous
-        // Possible soln: Send unselected MediaID in seperate field -
-        // or vice-versa. Then Append link to newMedia[].
-        if (hasMedia) {
-            const newMedias = [];
-            mediaFiles.forEach((media) => {
-                if (!media.path)
-                    throw new ResourceNotFoundException("Media url not found");
-                if (!media.mimetype)
-                    throw new InvalidMediaTypeException(
-                        "Media type not specified"
-                    );
-                newMedias.push({
-                    url: media.path,
-                    type: media.mimetype.split("/")[0],
-                });
-            });
-            // Add field to body
-            req.body.mediaFiles = newMedias;
-        }
 
         const updatedPost = await Post.findByIdAndUpdate(
             pid,

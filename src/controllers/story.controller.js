@@ -16,6 +16,10 @@ const EntityFieldsFilter = require("../utils/entity.filter");
 const ConsoleLog = require("../utils/log.console");
 const HyperLinks = require("../utils/_link.hyper");
 
+const bufferParser = require("../utils/buffer.parser");
+const cloudinary = require("../config/cloudinary");
+const env = process.env.NODE_ENV;
+
 /* constraints start*/
 const storyPerPage = 10;
 const likerPerPage = 10;
@@ -176,10 +180,28 @@ const createStory = async (req, res, next) => {
         else type = "text";
 
         if (hasMedia) {
-            cleanedMedia = {
-                url: media.path,
-                type: media.mimetype.split("/")[0],
-            };
+            if (env === "dev") {
+                cleanedMedia = {
+                    url: media.path,
+                    type: media.mimetype.split("/")[0],
+                };
+                return;
+            }
+            const file = bufferParser(media).content;
+            await cloudinary.uploader
+                .upload(file, {
+                    folder: `story/${req.user.username}`, // Set a folder in Cloudinary to store the uploaded files
+                    resource_type: "auto", // Let Cloudinary automatically determine the resource type (e.g., image, video)
+                })
+                .then((result) => {
+                    cleanedMedia = {
+                        url: result.secure_url,
+                        type: result.resource_type,
+                    };
+                })
+                .catch((err) => {
+                    console.error(err);
+                });
         }
 
         const storyPromise = Story.create({
